@@ -1,1 +1,35 @@
-{}
+{
+  "dependencies": [
+    {
+      "name": "arrow",
+      "features": [
+        "acero",
+        "compute",
+        "dataset",
+        "json"
+      ]
+    },
+    "boost-algorithm",
+    "boost-filesystem",
+    "boost-thread",
+    "boost-variant",
+    "braft",
+    "brpc",
+    "faiss",
+    "fast-float",
+    "gperftools",
+    "libmariadb",
+    "rapidjson",
+    "roaring",
+    {
+      "name": "rocksdb",
+      "features": [
+        "lz4",
+        "zlib",
+        "zstd"
+      ]
+    },
+    "turbo",
+    "gtest"
+  ]
+}

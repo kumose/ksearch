@@ -18,7 +18,7 @@ ksearch Project Description
 
 ## 🛠️ Build
 
-This project uses [kmpkg](https://github.com/kumose/kmcmake) for dependency management and build integration.
+This project uses [kmpkg](https://github.com/kumose/kmpkgcore) for dependency management and build integration.
 `kmpkg` automatically handles third-party library downloads, dependency resolution, and compiler flag configuration, avoiding the need to manually maintain complex CMake settings.
 
 

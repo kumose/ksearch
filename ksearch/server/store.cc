@@ -1,0 +1,226 @@
+// Copyright (C) Kumo inc. and its affiliates.
+// Copyright (C) Kumo inc. and its affiliates.
+// Copyright (c) 2018-present Baidu, Inc. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include <ctime>
+#include <cstdlib>
+#include <net/if.h>
+#include <sys/ioctl.h>
+#include <gflags/gflags.h>
+#include <signal.h>
+#include <cxxabi.h>
+#include<execinfo.h>
+#include <stdio.h>
+#include <string>
+#include <boost/filesystem.hpp>
+//#include <gperftools/malloc_extension.h>
+#include <ksearch/common/common.h>
+#include <ksearch/raft/my_raft_log.h>
+#include <ksearch/store/store.h>
+#include <ksearch/reverse/reverse_common.h>
+#include <ksearch/expr/fn_manager.h>
+#include <ksearch/common/schema_factory.h>
+#include <ksearch/engine/qos.h>
+#include <ksearch/common/memory_profile.h>
+#include <ksearch/expr/arrow_function.h>
+#include <ksearch/exec/arrow_exec_node.h>
+#include <ksearch/store/compaction_server.h>
+
+namespace ksearch {
+    DECLARE_bool (use_fulltext_wordweight_segment);
+    DECLARE_bool (use_fulltext_wordseg_wordrank_segment);
+    DEFINE_string(wordrank_conf, "./config/drpc_client.xml", "wordrank conf path");
+} // namespace ksearch
+DEFINE_bool(stop_server_before_core, true, "Stop server before core dump, default: true");
+DEFINE_int32(compaction_sst_cache_capacity, 200000, "compaction_sst_cache_capacity");
+
+brpc::Server server;
+// 内存过大时，coredump需要几分钟，这期间会丢请求
+// 理论上应该采用可重入函数，但是堆栈不好获取
+// 考虑到core的概率不大，先这样处理
+void sigsegv_handler(int signum, siginfo_t *info, void *ptr) {
+    void *buffer[1000];
+    char **strings;
+    int nptrs = backtrace(buffer, 1000);
+    DB_FATAL("segment fault, backtrace() returned %d addresses", nptrs);
+    strings = backtrace_symbols(buffer, nptrs);
+    if (strings != NULL) {
+        for (int j = 0; j < nptrs; j++) {
+            int status = 0;
+            char *name = abi::__cxa_demangle(strings[j], nullptr, nullptr, &status);
+            DB_FATAL("orgin:%s", strings[j]);
+            if (name != nullptr) {
+                DB_FATAL("%s", name);
+            }
+        }
+    }
+    server.Stop(0);
+    // core的过程中依然会hang住ksearch请求
+    // 先等一会，ksearch反应过来
+    // 后续再调整
+    sleep(5);
+    abort();
+}
+
+int main(int argc, char **argv) {
+#ifdef KSEARCH_REVISION
+    google::SetVersionString(KSEARCH_REVISION);
+    static bvar::Status<std::string> ksearch_version("ksearch_version", "");
+    ksearch_version.set_value(KSEARCH_REVISION);
+#endif
+    google::SetCommandLineOption("flagfile", "conf/gflags.conf");
+    google::ParseCommandLineFlags(&argc, &argv, true);
+    srand((unsigned) time(NULL));
+    boost::filesystem::path remove_path("init.success");
+    boost::filesystem::remove_all(remove_path);
+    // Initail log
+    if (ksearch::init_log(argv[0]) != 0) {
+        fprintf(stderr, "log init failed.");
+        return -1;
+    }
+    // 信号处理函数非可重入，可能会死锁
+    if (FLAGS_stop_server_before_core) {
+        struct sigaction act;
+        int sig = SIGSEGV;
+        sigemptyset(&act.sa_mask);
+        act.sa_sigaction = sigsegv_handler;
+        act.sa_flags = SA_SIGINFO;
+        if (sigaction(sig, &act, NULL) < 0) {
+            DB_FATAL("sigaction fail, %m");
+            exit(1);
+        }
+    }
+    //    DB_WARNING("log file load success; GetMemoryReleaseRate:%f", 
+    //            MallocExtension::instance()->GetMemoryReleaseRate());
+    ksearch::register_myraft_extension();
+    int ret = 0;
+    ksearch::Tokenizer::get_instance()->init();
+
+    /*
+    auto call = []() {
+        std::ifstream extra_fs("test_file");
+        std::string word((std::istreambuf_iterator<char>(extra_fs)),
+                std::istreambuf_iterator<char>());
+        ksearch::TimeCost tt1;
+        for (int i = 0; i < 1000000000; i++) {
+            //word+="1";
+            std::string word2 = word + "1";
+            std::map<std::string, float> term_map;
+            ksearch::Tokenizer::get_instance()->wordrank(word2, term_map);
+            if (i%1000==0) {
+                DB_WARNING("wordrank:%d",i);
+            }
+        }
+        DB_WARNING("wordrank:%ld", tt1.get_time());
+    };
+    ksearch::ConcurrencyBthread cb(100);
+    for (int i = 0; i < 100; i++) {
+        cb.run(call);
+    }
+    cb.join();
+    return 0;
+    */
+    // init singleton
+    ksearch::FunctionManager::instance()->init();
+    if (ksearch::SchemaFactory::get_instance()->init() != 0) {
+        DB_FATAL("SchemaFactory init failed");
+        return -1;
+    }
+    if (ksearch::ArrowFunctionManager::instance()->RegisterAllArrowFunction() != 0) {
+        DB_FATAL("ArrowFunctionManager init failed");
+        return -1;
+    }
+    if (ksearch::ArrowExecNodeManager::RegisterAllArrowExecNode() != 0) {
+        DB_FATAL("RegisterAllArrowExecNode failed");
+        return -1;
+    }
+    if (ksearch::GlobalArrowExecutor::init() != 0) {
+        DB_FATAL("GlobalArrowExecutor init failed");
+        return -1;
+    }
+    ksearch::CompactionSstCache::get_instance()->init(FLAGS_compaction_sst_cache_capacity);
+    //add service
+    butil::EndPoint addr;
+    addr.ip = butil::IP_ANY;
+    addr.port = ksearch::FLAGS_store_port;
+    //将raft加入到baidu-rpc server中
+    if (0 != braft::add_service(&server, addr)) {
+        DB_FATAL("Fail to init raft");
+        return -1;
+    }
+    DB_WARNING("add raft to baidu-rpc server success");
+    ksearch::StoreQos *store_qos = ksearch::StoreQos::get_instance();
+    ret = store_qos->init();
+    if (ret < 0) {
+        DB_FATAL("store qos init fail");
+        return -1;
+    }
+    ksearch::MemoryGCHandler::get_instance()->init();
+    ksearch::MemTrackerPool::get_instance()->init();
+    //注册处理Store逻辑的service服务
+    ksearch::Store *store = ksearch::Store::get_instance();
+    std::vector<std::int64_t> init_region_ids;
+    ret = store->init_before_listen(init_region_ids);
+    if (ret < 0) {
+        DB_FATAL("Store instance init_before_listen fail");
+        return -1;
+    }
+    if (0 != server.AddService(store, brpc::SERVER_DOESNT_OWN_SERVICE)) {
+        DB_FATAL("Fail to Add StoreService");
+        return -1;
+    }
+    ksearch::CompactionServer *compaction_server = ksearch::CompactionServer::get_instance();
+    if (0 != server.AddService(compaction_server, brpc::SERVER_DOESNT_OWN_SERVICE)) {
+        DB_FATAL("Fail to Add StoreService");
+        return -1;
+    }
+    if (server.Start(addr, NULL) != 0) {
+        DB_FATAL("Fail to start server");
+        return -1;
+    }
+    DB_WARNING("start rpc success");
+    ret = store->init_after_listen(init_region_ids);
+    if (ret < 0) {
+        DB_FATAL("Store instance init_after_listen fail");
+        return -1;
+    }
+    std::ofstream init_fs("init.success", std::ofstream::out | std::ofstream::trunc);
+    DB_WARNING("store instance init success");
+    //server.RunUntilAskedToQuit();
+    while (!brpc::IsAskedToQuit()) {
+        bthread_usleep(1000000L);
+    }
+    DB_WARNING("recevie kill signal, begin to quit");
+    store->shutdown_raft();
+    store->close();
+    DB_WARNING("store close success");
+    store_qos->close();
+    DB_WARNING("store qos close success");
+    ksearch::MemoryGCHandler::get_instance()->close();
+    ksearch::MemTrackerPool::get_instance()->close();
+    ksearch::GlobalArrowExecutor::shutdown();
+    // exit if server.join is blocked
+    ksearch::Bthread bth;
+    bth.run([]() {
+        bthread_usleep(2 * 60 * 1000 * 1000);
+        DB_FATAL("store forse exit");
+        exit(-1);
+    });
+    // 需要后关端口
+    server.Stop(0);
+    server.Join();
+    DB_WARNING("quit success");
+    return 0;
+}

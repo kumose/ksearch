@@ -1,0 +1,364 @@
+// Copyright (C) Kumo inc. and its affiliates.
+// Copyright (C) Kumo inc. and its affiliates.
+// Copyright (c) 2018-present Baidu, Inc. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include <ksearch/exec/index_ddl_manager_node.h>
+#include <ksearch/exec/exec_node.h>
+#include <ksearch/common/schema_factory.h>
+#include <ksearch/runtime/runtime_state.h>
+#include <ksearch/exec/select_manager_node.h>
+#include <ksearch/exec/rocksdb_scan_node.h>
+#include <ksearch/exec/lock_secondary_node.h>
+
+namespace ksearch {
+    IndexDDLManagerNode::IndexDDLManagerNode() {
+    }
+
+    IndexDDLManagerNode::~IndexDDLManagerNode() {
+    }
+
+    bool IndexDDLManagerNode::is_ddl_delete(const pb::ScanNode &scan_node) {
+        if (scan_node.ddl_work_type() == pb::DDL_COLUMN
+            && scan_node.has_column_ddl_info()
+            && scan_node.column_ddl_info().update_exprs_size() == 0) {
+            return true;
+        }
+        return false;
+    }
+
+    int IndexDDLManagerNode::open(RuntimeState *state) {
+        state->set_is_ddl_work(true);
+        int ret = 0;
+        auto client_conn = state->client_conn();
+        if (client_conn == nullptr) {
+            DB_WARNING("task_%s connection is nullptr: %lu", _task_id.c_str(), state->txn_id);
+            return -1;
+        }
+        client_conn->seq_id++;
+
+        std::vector<ExecNode *> scan_nodes;
+        get_node(pb::SCAN_NODE, scan_nodes);
+        if (scan_nodes.size() != 1) {
+            DB_WARNING("select manager has more than one scan node txn_id: %lu, log_id:%lu",
+                       state->txn_id, state->log_id());
+            return -1;
+        }
+        ON_SCOPE_EXIT(([this, state]() {
+            state->memory_limit_release_all();
+        }));
+        RocksdbScanNode *scan_node = static_cast<RocksdbScanNode *>(scan_nodes[0]);
+        auto limit = scan_node->get_limit();
+        int64_t main_table_id = scan_node->table_id();
+        std::vector<SmartRecord> insert_records;
+        std::vector<SmartRecord> delete_records;
+        insert_records.reserve(limit);
+        std::map<int64_t, pb::RegionInfo> region_infos;
+
+        const pb::ScanNode &scan_node_pb = scan_node->pb_node().derive_node().scan_node();
+        bool ddl_delete = is_ddl_delete(scan_node_pb);
+        if (ddl_delete && init_lock_nodes_if_not_exist() < 0) {
+            DB_FATAL("ddl delete init lock_nodes failed");
+            return ret;
+        }
+
+        SmartRecord record_template = SchemaFactory::get_instance()->new_record(main_table_id);
+        auto tuple_id = 0;
+        int32_t ddl_scan_size = 0;
+        std::string max_pk_str;
+        std::string max_record;
+        bool global_ddl_with_ttl = _fetcher_store.region_id_ttl_timestamp_batch.size() > 0;
+        std::map<std::string, int64_t> record_ttl_map;
+
+        auto pk_info = SchemaFactory::get_instance()->get_index_info(_table_id);
+        if (pk_info.id == -1) {
+            DB_FATAL("task_%s index not ready.", _task_id.c_str());
+            return -1;
+        }
+        std::map<std::string, int64_t> start_key_sort;
+        // 按顺序请求region，ddl相同partition，可以用普通map
+        for (auto &pair: _region_infos) {
+            start_key_sort.emplace(pair.second.start_key(), pair.first);
+        }
+
+        while (!start_key_sort.empty()) {
+            auto iter = start_key_sort.begin();
+            if (iter == start_key_sort.end()) {
+                break;
+            }
+            region_infos.clear();
+            region_infos[iter->second] = _region_infos[iter->second];
+            client_conn->region_infos[iter->second] = _region_infos[iter->second];
+            start_key_sort.erase(iter);
+
+            ret = _fetcher_store.run(state, region_infos, _children[0], client_conn->seq_id, client_conn->seq_id,
+                                     pb::OP_SELECT_FOR_UPDATE);
+            if (ret < 0) {
+                DB_WARNING("task_%s select manager fetcher manager node open fail, txn_id: %lu, log_id:%lu",
+                           _task_id.c_str(), state->txn_id, state->log_id());
+                state->ddl_error_code = state->error_code;
+                return ret;
+            }
+            for (auto &pair: _fetcher_store.start_key_sort) {
+                auto iter = _fetcher_store.region_batch.find(pair.second);
+                if (iter == _fetcher_store.region_batch.end()) {
+                    continue;
+                }
+                auto &batch = iter->second.row_data;
+                if (batch == NULL || batch->size() == 0) {
+                    _fetcher_store.region_batch.erase(iter);
+                    continue;
+                }
+                if (!_is_global_index && !max_pk_str.empty()) {
+                    DB_WARNING("split only return first region, task_%s", _task_id.c_str());
+                    break;
+                }
+                auto &ttl_batch = _fetcher_store.region_id_ttl_timestamp_batch[pair.second];
+                if (global_ddl_with_ttl && batch->size() != ttl_batch.size()) {
+                    DB_FATAL("region_id: %ld, batch size diff with ttl size %ld vs %ld", pair.second, batch->size(),
+                             ttl_batch.size());
+                    global_ddl_with_ttl = false;
+                }
+                int ttl_idx = 0;
+                for (batch->reset(); !batch->is_traverse_over(); batch->next()) {
+                    ddl_scan_size++;
+                    std::unique_ptr<MemRow> &mem_row = batch->get_row();
+                    SmartRecord record = record_template->clone(false);
+                    auto construct_record = [state, &record, &mem_row, tuple_id, &insert_records
+                            ](int64_t index_id) -> int {
+                        // ddl column时index_id=0
+                        if (index_id == 0) {
+                            return 0;
+                        }
+                        auto index_info_ptr = SchemaFactory::get_instance()->get_index_info_ptr(index_id);
+                        if (index_info_ptr == nullptr) {
+                            DB_FATAL("index info ptr is nullptr");
+                            return -1;
+                        }
+
+                        for (auto &field: index_info_ptr->fields) {
+                            int32_t field_id = field.id;
+                            int32_t slot_id = state->get_slot_id(tuple_id, field_id);
+                            record->set_value(record->get_field_by_tag(field_id),
+                                              mem_row->get_value(tuple_id, slot_id));
+                        }
+                        return 0;
+                    };
+
+                    if (construct_record(_table_id) == -1 || construct_record(_index_id) == -1) {
+                        DB_WARNING("task_%s construct record error", _task_id.c_str());
+                        return -1;
+                    }
+                    insert_records.emplace_back(record);
+                    DB_DEBUG("record %s", record->debug_string().c_str());
+                    if (global_ddl_with_ttl) {
+                        std::string record_str;
+                        record->encode(record_str);
+                        record_ttl_map[record_str] = ttl_batch[ttl_idx++];
+                    }
+                    // 已排序，只 encode batch最后的record 或者 最后一个record。
+                    if (batch->index() + 1 == batch->size() || ddl_scan_size == limit) {
+                        MutTableKey max_pk_key;
+                        int ret = record->encode_key(pk_info, max_pk_key, -1, false, false);
+                        if (ret != 0) {
+                            DB_WARNING("task_%s encode error.", _task_id.c_str());
+                            return ret;
+                        }
+                        DB_DEBUG("get pk key %s", str_to_hex(max_pk_key.data()).c_str());
+                        max_record = max_pk_key.data();
+                        if (max_pk_key.data() > max_pk_str) {
+                            DB_DEBUG("get max pk key %s", str_to_hex(max_pk_key.data()).c_str());
+                            max_pk_str = max_pk_key.data();
+                        }
+                        state->ddl_pk_key_is_full = max_pk_key.get_full();
+                    }
+                }
+                _fetcher_store.region_batch.erase(iter);
+                if (insert_records.size() >= limit) {
+                    DB_DEBUG("get limit %ld", limit);
+                    break;
+                }
+            }
+
+            if (!_is_global_index && !max_pk_str.empty()) {
+                DB_WARNING("split only return first region, task_%s", _task_id.c_str());
+                break;
+            }
+            if (insert_records.size() >= limit) {
+                DB_DEBUG("get limit %ld", limit);
+                break;
+            }
+        }
+        state->ddl_scan_size = ddl_scan_size;
+        state->ddl_max_pk_key = max_record;
+        state->ddl_max_router_key = max_pk_str;
+        std::string first_record;
+        std::string last_record;
+        if (state->ddl_scan_size > 0) {
+            first_record = insert_records[0]->to_string();
+            last_record = insert_records.back()->to_string();
+            if (state->first_record_ptr == nullptr) {
+                state->first_record_ptr.reset(new std::string(first_record));
+            }
+            state->last_record_ptr.reset(new std::string(last_record));
+        }
+        DB_NOTICE("task_%s ddl scan size %d, first_record %s last_record %s max_pk_key %s log_id %lu",
+                  _task_id.c_str(), ddl_scan_size, first_record.c_str(), last_record.c_str(),
+                  str_to_hex(max_pk_str).c_str(), state->log_id());
+
+        if (_is_global_index &&ddl_scan_size
+        
+        >
+        0
+        )
+        {
+            std::map<int64_t, pb::RegionInfo> empty_region_infos;
+            set_region_infos(empty_region_infos);
+            set_op_type(pb::OP_INSERT);
+            DMLNode *exec_node = static_cast<DMLNode *>(_children[1]);
+            LockSecondaryNode *second_node = static_cast<LockSecondaryNode *>(exec_node);
+            second_node->set_ttl_timestamp(record_ttl_map);
+            ret = send_request_light(state, exec_node, _fetcher_store, client_conn->seq_id, insert_records,
+                                     delete_records);
+            if (ret == -1) {
+                state->ddl_error_code = state->error_code;
+                DB_FATAL("task_%s send request error [%d] log_id %lu.", _task_id.c_str(), state->error_code,
+                         state->log_id());
+            } else {
+                DB_NOTICE("task_%s scan record %d, insert record %d log_id %lu", _task_id.c_str(), ddl_scan_size, ret,
+                          state->log_id());
+                if (ret != ddl_scan_size) {
+                    DB_FATAL("task_%s scan number and insert number not equal log_id %lu.", _task_id.c_str(),
+                             state->log_id());
+                    ret = -1;
+                }
+            }
+        }
+        if (ddl_delete && !insert_records.empty()) {
+            delete_records.swap(insert_records);
+            int64_t affected_rows = send_request(state, _lock_primary.get(), std::vector<SmartRecord>{},
+                                                 delete_records);
+            if (affected_rows < 0) {
+                DB_WARNING("DDL delete pk failed.");
+                return -1;
+            }
+            delete_records.swap(_fetcher_store.index_records[_table_id]);
+            for (auto &lock_secondary: _lock_secondaries) {
+                affected_rows = send_request(state, lock_secondary.get(), std::vector<SmartRecord>{}, delete_records);
+                if (affected_rows < 0) {
+                    DB_WARNING("DDL delete global index failed.");
+                    return -1;
+                }
+            }
+            // TODO: 需要处理binlog?
+        }
+        return ret;
+    }
+
+    int IndexDDLManagerNode::create_lock_primary_node(
+        int64_t table_id,
+        std::unique_ptr<LockPrimaryNode> &primary_node) const {
+        auto table_info = _factory->get_table_info_ptr(table_id);
+        if (table_info == nullptr) {
+            return -1;
+        }
+        primary_node.reset(new(std::nothrow) LockPrimaryNode);
+        if (primary_node == nullptr) {
+            DB_WARNING("create manager_node failed");
+            return -1;
+        }
+
+        std::vector<int64_t> local_affected_indexs;
+        local_affected_indexs.reserve(3);
+        for (auto index_id: table_info->indices) {
+            auto index_info = _factory->get_index_info_ptr(index_id);
+            if (index_info == nullptr) {
+                return -1;
+            }
+            if (index_info->index_hint_status == pb::IHS_VIRTUAL) {
+                DB_NOTICE("index info is virtual, skip.");
+                continue;
+            }
+            if (index_info->index_hint_status == pb::IHS_DISABLE
+                && index_info->state == pb::IS_DELETE_LOCAL) {
+                continue;
+            }
+            if (index_info->is_global) {
+                continue;
+            }
+            local_affected_indexs.emplace_back(index_id);
+        }
+
+        pb::PlanNode plan_node;
+        plan_node.set_node_type(pb::LOCK_PRIMARY_NODE);
+        plan_node.set_limit(-1);
+        plan_node.set_num_children(0);
+        auto lock_primary_node = plan_node.mutable_derive_node()->mutable_lock_primary_node();
+        lock_primary_node->set_lock_type(pb::LOCK_GET_DML);
+        lock_primary_node->set_table_id(table_id);
+        primary_node->init(plan_node);
+        primary_node->set_affected_index_ids(local_affected_indexs);
+        return 0;
+    }
+
+    int IndexDDLManagerNode::create_lock_secondary_node(
+        int64_t table_id,
+        std::vector<std::unique_ptr<LockSecondaryNode> > &secondary_nodes) const {
+        auto table_info = _factory->get_table_info_ptr(table_id);
+        if (table_info == nullptr) {
+            return -1;
+        }
+        std::vector<int64_t> global_affected_indexs;
+        global_affected_indexs.reserve(3);
+        for (auto index_id: table_info->indices) {
+            auto index_info = _factory->get_index_info_ptr(index_id);
+            if (index_info == nullptr) {
+                return -1;
+            }
+            if (index_info->index_hint_status == pb::IHS_VIRTUAL) {
+                DB_NOTICE("index info is virtual, skip.");
+                continue;
+            }
+            if (index_info->index_hint_status == pb::IHS_DISABLE
+                && index_info->state == pb::IS_DELETE_LOCAL) {
+                continue;
+            }
+            if (index_info->is_global) {
+                if (index_info->state == pb::IS_NONE) {
+                    DB_NOTICE("index info is NONE, skip.");
+                    continue;
+                }
+                global_affected_indexs.emplace_back(index_id);
+            }
+        }
+        for (auto index_id: global_affected_indexs) {
+            std::unique_ptr<LockSecondaryNode> secondary_node(new(std::nothrow) LockSecondaryNode);
+            if (secondary_node == nullptr) {
+                DB_WARNING("create manager_node failed");
+                return -1;
+            }
+            pb::PlanNode plan_node;
+            plan_node.set_node_type(pb::LOCK_SECONDARY_NODE);
+            plan_node.set_limit(-1);
+            plan_node.set_num_children(0);
+            auto lock_secondary_node = plan_node.mutable_derive_node()->mutable_lock_secondary_node();
+            lock_secondary_node->set_lock_type(pb::LOCK_DML);
+            lock_secondary_node->set_global_index_id(index_id);
+            lock_secondary_node->set_table_id(table_id);
+            secondary_node->init(plan_node);
+            secondary_nodes.emplace_back(std::move(secondary_node));
+        }
+        return 0;
+    }
+}
