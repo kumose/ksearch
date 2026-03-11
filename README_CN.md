@@ -16,6 +16,8 @@ ksearch
 
 ksearch 项目说明
 
+![](docs/img/arch.png)
+
 ## 🛠️ Build
 
 本项目使用 [kmpkg](https://github.com/kumose/kmcmake) 进行依赖管理与构建集成。
