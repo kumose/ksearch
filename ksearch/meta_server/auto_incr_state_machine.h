@@ -1,5 +1,4 @@
-// Copyright (C) Kumo inc. and its affiliates.
-// Copyright (C) Kumo inc. and its affiliates.
+// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 // Copyright (c) 2018-present Baidu, Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,11 +25,10 @@ namespace ksearch {
             1, "auto_incr_raft", "/auto_incr", peerId) {
         }
 
-        virtual ~AutoIncrStateMachine() {
-        }
+        ~AutoIncrStateMachine() override  = default;
 
         // state machine method
-        virtual void on_apply(braft::Iterator &iter);
+        void on_apply(braft::Iterator &iter) override;
 
         void add_table_id(const pb::MetaManagerRequest &request, braft::Closure *done);
 
@@ -40,9 +38,9 @@ namespace ksearch {
 
         void update(const pb::MetaManagerRequest &request, braft::Closure *done);
 
-        virtual void on_snapshot_save(braft::SnapshotWriter *writer, braft::Closure *done);
+        void on_snapshot_save(braft::SnapshotWriter *writer, braft::Closure *done) override;
 
-        virtual int on_snapshot_load(braft::SnapshotReader *reader);
+        int on_snapshot_load(braft::SnapshotReader *reader) override;
 
     private:
         void save_auto_increment(std::string &max_id_string);

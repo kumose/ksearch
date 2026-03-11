@@ -1,0 +1,203 @@
+// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+syntax = "proto2";
+
+import "ksearch/proto/raft.proto";
+
+package kns.pb;
+
+// KNS operation type enumeration
+// Used to define all supported operations for KNS (Ksearch Name Service)
+enum KnsOpType {
+    /// Default empty operation
+    KNS_NONE = 0;
+    /// Create a new KNS instance
+    KNS_CREATE = 1;
+    /// Remove an existing KNS instance
+    KNS_REMOVE = 2;
+    /// Stop a running KNS instance
+    KNS_STOP = 3;
+    /// Resume a stopped KNS instance
+    KNS_RESUME = 4;
+
+    /// Stop a specific peer node in KNS instance
+    KNS_STOP_PEER = 50;
+    /// Resume a stopped peer node in KNS instance
+    KNS_RESUME_PEER = 51;
+
+    /// Peer node reports its status to KNS manager
+    KNS_PEER_REPORT = 60;
+};
+
+// KNS error code enumeration
+// Standardized error codes for KNS operation responses
+enum KnsCode {
+    /// No error (success)
+    KC_NONE = 0;
+    /// KNS instance not found
+    KC_NOT_FOUND = 1;
+    /// KNS instance already exists
+    KC_ALREADY_EXISTS = 2;
+    /// KNS instance is stopped
+    KC_STOP = 3;
+    /// Target peer node is stopped
+    KC_STOP_PEER = 4;
+    /// Target peer node not found in KNS instance
+    KC_PEER_NOT_FOUND = 5;
+}
+
+// Peer node status enumeration
+// Represents the running status of a KNS peer node
+enum PeerStatus {
+    /// Peer node is running normally
+    PEER_NORMAL = 0;
+    /// Peer node is stopped
+    PEER_STOP = 1;
+}
+
+// KNS instance status enumeration
+// Represents the running status of a KNS instance
+enum KnsStatus {
+    /// KNS instance is running normally
+    KS_NORMAL = 0;
+    /// KNS instance is stopped
+    KS_STOP = 1;
+}
+
+// KNS peer node information
+// Contains identity and status of a single KNS peer node
+message KnsPeer {
+    // Unique identifier of peer node (e.g., IP:Port)
+    required string peer = 1;
+    // Running status of the peer node
+    optional PeerStatus status = 2;
+}
+
+// KNS peer status report request
+// Used by peer nodes to report their status to KNS manager
+message KnsReportRequest {
+    // Name of the KNS instance the peer belongs to
+    required string kns = 1;
+    // Peer node information to report
+    required KnsPeer peer = 2;
+};
+
+// KNS manager unified request
+// General request structure for all KNS management operations
+message KnsManagerRequest {
+    // Type of operation to perform
+    required KnsOpType opcode = 1;
+    // Peer status report data (only valid for KNS_PEER_REPORT)
+    optional KnsReportRequest report = 2;
+    // Name of the target KNS instance
+    optional string kns = 3;
+    // List of target peer nodes (for peer-specific operations)
+    repeated string peers = 4;
+};
+
+// KNS manager unified response
+// General response structure for all KNS management operations
+message KnsManagerResponse {
+    // Error code of the operation
+    required KnsCode errcode = 1;
+    // Detailed error message (empty if success)
+    optional string errmsg = 2;
+    // Leader node of the KNS cluster (if applicable)
+    optional string leader = 3;
+    // Operation type corresponding to the request
+    required KnsOpType opcode = 4;
+};
+
+// KNS instance query request
+// Request to query KNS instance/peer status
+message KnsQueryRequest {
+    // Name of the KNS instance to query (empty for all instances)
+    optional string kns = 1;
+}
+
+// KNS instance query response
+// Response containing KNS instance/peer status information
+message KnsQueryResponse {
+    // Error code of the query operation
+    required KnsCode errcode = 1;
+    // Detailed error message (empty if success)
+    optional string errmsg = 2;
+    // List of peer nodes for the target KNS instance
+    repeated KnsPeer peers = 3;
+    // List of all KNS instances (returned when querying all)
+    repeated KnsInstance all_kns = 4;
+}
+
+// KNS internal service interface
+// Internal service for KNS cluster management (only for internal calls)
+service KnsInternalService {
+    // Raft cluster control (leader election, replication, etc.)
+    rpc raft_control(ksearch.pb.RaftControlRequest) returns (ksearch.pb.RaftControlResponse);
+    // Unified entry for KNS instance management operations
+    rpc kns_manager(KnsManagerRequest) returns (KnsManagerResponse);
+    // Query KNS instance/peer status
+    rpc kns_query(KnsQueryRequest) returns (KnsQueryResponse);
+}
+
+// KNS external operation request
+// Simplified request structure for external business calls
+message KnsRequest {
+    // Name of the target KNS instance
+    required string kns = 1;
+    // List of target peer nodes (required for peer-specific operations)
+    repeated string peers = 2;
+}
+
+// KNS external operation response
+// Simplified response structure for external business calls
+message KnsResponse {
+    // Error code of the operation
+    required KnsCode errcode = 1;
+    // Detailed error message (empty if success)
+    optional string errmsg = 2;
+}
+
+// KNS instance complete information
+// Contains full metadata of a KNS instance
+message KnsInstance {
+    // Unique name of the KNS instance
+    required string kns = 1;
+    // Running status of the KNS instance
+    optional KnsStatus status = 2;
+    // List of all peer nodes in the KNS instance
+    repeated KnsPeer peers = 3;
+}
+
+// KNS external service interface
+// External service for business layer to operate KNS instances
+service KnsService {
+    // Create a new KNS instance
+    rpc create(KnsRequest) returns (KnsResponse);
+    // Remove an existing KNS instance
+    rpc remove(KnsRequest) returns (KnsResponse);
+    // Stop a running KNS instance
+    rpc stop(KnsRequest) returns (KnsResponse);
+    // Resume a stopped KNS instance
+    rpc resume(KnsRequest) returns(KnsResponse);
+
+    // Stop a specific peer node in KNS instance
+    rpc stop_peer(KnsRequest) returns (KnsResponse);
+    // Resume a stopped peer node in KNS instance
+    rpc resume_peer(KnsRequest) returns (KnsResponse);
+
+    // Query KNS instance/peer status
+    rpc query(KnsQueryRequest) returns (KnsQueryResponse);
+}
