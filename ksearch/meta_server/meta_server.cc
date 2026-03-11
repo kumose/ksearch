@@ -1,5 +1,4 @@
-// Copyright (C) Kumo inc. and its affiliates.
-// Copyright (C) Kumo inc. and its affiliates.
+// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 // Copyright (c) 2018-present Baidu, Inc. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -64,8 +63,6 @@ namespace ksearch {
     const std::string MetaServer::INDEX_DDLWORK_REGION_IDENTIFY(1, 0x08);
     const std::string MetaServer::MAX_IDENTIFY(1, 0xFF);
 
-    MetaServer::~MetaServer() {
-    }
 
     int MetaServer::init(const std::vector<braft::PeerId> &peers) {
         auto ret = MetaRocksdb::get_instance()->init();
@@ -78,7 +75,7 @@ namespace ksearch {
         addr.port = FLAGS_meta_port;
         braft::PeerId peer_id(addr, 0);
         _meta_state_machine = new(std::nothrow)MetaStateMachine(peer_id);
-        if (_meta_state_machine == NULL) {
+        if (_meta_state_machine == nullptr) {
             DB_FATAL("new meta_state_machine fail");
             return -1;
         }
@@ -98,7 +95,7 @@ namespace ksearch {
         DB_WARNING("meta state machine init success");
 
         _auto_incr_state_machine = new(std::nothrow)AutoIncrStateMachine(peer_id);
-        if (_auto_incr_state_machine == NULL) {
+        if (_auto_incr_state_machine == nullptr) {
             DB_FATAL("new auot_incr_state_machine fail");
             return -1;
         }
@@ -110,7 +107,7 @@ namespace ksearch {
         DB_WARNING("auot_incr_state_machine init success");
 
         _tso_state_machine = new(std::nothrow)TSOStateMachine(peer_id);
-        if (_tso_state_machine == NULL) {
+        if (_tso_state_machine == nullptr) {
             DB_FATAL("new _tso_state_machine fail");
             return -1;
         }
@@ -696,7 +693,7 @@ namespace ksearch {
             log_id = cntl->log_id();
         }
         RETURN_IF_NOT_INIT(_init_success, response, log_id);
-        if (_meta_state_machine != NULL) {
+        if (_meta_state_machine != nullptr) {
             _meta_state_machine->store_heartbeat(controller, request, response, done_guard.release());
         }
     }
@@ -785,7 +782,7 @@ namespace ksearch {
         }
         pb::MigrateRequest request;
         DB_WARNING("start any_migrate");
-        if (data != NULL) {
+        if (data != nullptr) {
             std::string decode_data = url_decode(*data);
             DB_WARNING("start any_migrate %s %s", data->c_str(), decode_data.c_str());
             json2pb(decode_data, &request);

@@ -1,5 +1,4 @@
-// Copyright (C) Kumo inc. and its affiliates.
-// Copyright (C) Kumo inc. and its affiliates.
+// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 // Copyright (c) 2018-present Baidu, Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,7 +48,7 @@ namespace ksearch {
         static const std::string INDEX_DDLWORK_REGION_IDENTIFY;
         static const std::string MAX_IDENTIFY;
 
-        virtual ~MetaServer();
+        ~MetaServer() override = default;
 
         static MetaServer *get_instance() {
             static MetaServer _instance;
@@ -59,51 +58,51 @@ namespace ksearch {
         int init(const std::vector<braft::PeerId> &peers);
 
         //schema control method
-        virtual void meta_manager(google::protobuf::RpcController *controller,
+        void meta_manager(google::protobuf::RpcController *controller,
                                   const pb::MetaManagerRequest *request,
                                   pb::MetaManagerResponse *response,
-                                  google::protobuf::Closure *done);
+                                  google::protobuf::Closure *done) override;
 
-        virtual void query(google::protobuf::RpcController *controller,
+        void query(google::protobuf::RpcController *controller,
                            const pb::QueryRequest *request,
                            pb::QueryResponse *response,
-                           google::protobuf::Closure *done);
+                           google::protobuf::Closure *done) override;
 
         //raft control method
-        virtual void raft_control(google::protobuf::RpcController *controller,
+        void raft_control(google::protobuf::RpcController *controller,
                                   const pb::RaftControlRequest *request,
                                   pb::RaftControlResponse *response,
-                                  google::protobuf::Closure *done);
+                                  google::protobuf::Closure *done) override;
 
-        virtual void store_heartbeat(google::protobuf::RpcController *controller,
+        void store_heartbeat(google::protobuf::RpcController *controller,
                                      const pb::StoreHeartBeatRequest *request,
                                      pb::StoreHeartBeatResponse *response,
-                                     google::protobuf::Closure *done);
+                                     google::protobuf::Closure *done) override;
 
-        virtual void ks_heartbeat(google::protobuf::RpcController *controller,
+        void ks_heartbeat(google::protobuf::RpcController *controller,
                                   const pb::KsHeartBeatRequest *request,
                                   pb::KsHeartBeatResponse *response,
-                                  google::protobuf::Closure *done);
+                                  google::protobuf::Closure *done) override;
 
-        virtual void ks_other_heartbeat(google::protobuf::RpcController *controller,
+        void ks_other_heartbeat(google::protobuf::RpcController *controller,
                                         const pb::KsOtherHeartBeatRequest *request,
                                         pb::KsOtherHeartBeatResponse *response,
-                                        google::protobuf::Closure *done);
+                                        google::protobuf::Closure *done) override;
 
-        virtual void console_heartbeat(google::protobuf::RpcController *controller,
+        void console_heartbeat(google::protobuf::RpcController *controller,
                                        const pb::ConsoleHeartBeatRequest *request,
                                        pb::ConsoleHeartBeatResponse *response,
-                                       google::protobuf::Closure *done);
+                                       google::protobuf::Closure *done) override;
 
-        virtual void tso_service(google::protobuf::RpcController *controller,
+        void tso_service(google::protobuf::RpcController *controller,
                                  const pb::TsoRequest *request,
                                  pb::TsoResponse *response,
-                                 google::protobuf::Closure *done);
+                                 google::protobuf::Closure *done) override;
 
-        virtual void migrate(google::protobuf::RpcController *controller,
+        void migrate(google::protobuf::RpcController *controller,
                              const pb::MigrateRequest * /*request*/,
                              pb::MigrateResponse *response,
-                             google::protobuf::Closure *done);
+                             google::protobuf::Closure *done) override;
 
         void flush_memtable_thread();
 
@@ -136,9 +135,9 @@ namespace ksearch {
 
         bthread::Mutex _meta_interact_mutex;
         std::map<std::string, MetaServerInteract *> _meta_interact_map;
-        MetaStateMachine *_meta_state_machine = NULL;
-        AutoIncrStateMachine *_auto_incr_state_machine = NULL;
-        TSOStateMachine *_tso_state_machine = NULL;
+        MetaStateMachine *_meta_state_machine = nullptr;
+        AutoIncrStateMachine *_auto_incr_state_machine = nullptr;
+        TSOStateMachine *_tso_state_machine = nullptr;
         Bthread _flush_bth;
         //region区间修改等信息应用raft
         Bthread _apply_region_bth;

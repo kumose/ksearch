@@ -37,6 +37,7 @@ set(PROTO_FILES
         proto/statistics.proto
         proto/store_interface.proto
         proto/test_decode.proto
+        proto/kns.proto
 )
 
 kmcmake_cc_proto(

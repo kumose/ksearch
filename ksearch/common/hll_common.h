@@ -1,3 +1,5 @@
+// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
+
 /* hyperloglog.c - Redis HyperLogLog probabilistic cardinality approximation.
  * This file implements the algorithm and the exported Redis commands.
  *

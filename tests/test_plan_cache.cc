@@ -1,4 +1,4 @@
-// Copyright (C) Kumo inc. and its affiliates.
+// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 // Copyright (c) 2023 Baidu, Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
