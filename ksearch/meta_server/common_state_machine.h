@@ -1,5 +1,5 @@
-// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 // Copyright (c) 2018-present Baidu, Inc. All Rights Reserved.
+// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -52,23 +52,22 @@ namespace ksearch {
     };
 
     struct TsoClosure : public braft::Closure {
-        TsoClosure() : sync_cond(nullptr) {
-        };
+        TsoClosure() = default;
 
         TsoClosure(BthreadCond *cond) : sync_cond(cond) {
         };
 
         virtual void Run();
 
-        brpc::Controller *cntl;
-        CommonStateMachine *common_state_machine;
-        google::protobuf::Closure *done;
-        pb::TsoResponse *response;
-        int64_t raft_time_cost;
-        int64_t total_time_cost;
+        brpc::Controller *cntl{nullptr};
+        CommonStateMachine *common_state_machine{nullptr};
+        google::protobuf::Closure *done{nullptr};
+        pb::TsoResponse *response{nullptr};
+        int64_t raft_time_cost{0};
+        int64_t total_time_cost{0};
         TimeCost time_cost;
         bool is_sync = false;
-        BthreadCond *sync_cond;
+        BthreadCond *sync_cond{nullptr};
     };
 
     struct ApplyraftClosure : public google::protobuf::Closure {
@@ -155,7 +154,7 @@ namespace ksearch {
         void list_normal_peers(std::set<std::string> &peers);
 
         virtual void shutdown_raft() {
-            _node.shutdown(NULL);
+            _node.shutdown(nullptr);
             DB_WARNING("raft node was shutdown");
             _node.join();
             DB_WARNING("raft node join completely");

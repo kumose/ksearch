@@ -346,6 +346,7 @@ kmcmake_cc_binary(
         LINKS
         ${PROJECT_NAME}::common_static
         ${KMCMAKE_DEPS_LINK}
+        LINKOPTS
         ${KMCMAKE_STATIC_BIN_OPTION}
         PUBLIC
 )
@@ -363,6 +364,7 @@ kmcmake_cc_binary(
         LINKS
         ${PROJECT_NAME}::common_static
         ${KMCMAKE_DEPS_LINK}
+        LINKOPTS
         ${KMCMAKE_STATIC_BIN_OPTION}
         PUBLIC
 )
@@ -378,6 +380,7 @@ kmcmake_cc_binary(
         LINKS
         ${PROJECT_NAME}::common_static
         ${KMCMAKE_DEPS_LINK}
+        LINKOPTS
         ${KMCMAKE_STATIC_BIN_OPTION}
         PUBLIC
 )

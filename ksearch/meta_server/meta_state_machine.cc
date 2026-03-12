@@ -1,5 +1,5 @@
-// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 // Copyright (c) 2018-present Baidu, Inc. All Rights Reserved.
+// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -536,7 +536,7 @@ namespace ksearch {
                    DatabaseManager::get_instance()->get_max_database_id(),
                    TableManager::get_instance()->get_max_table_id(),
                    RegionManager::get_instance()->get_max_region_id());
-        //创建snapshot
+        // create snapshot
         rocksdb::ReadOptions read_options;
         read_options.prefix_same_as_start = false;
         read_options.total_order_seek = true;
