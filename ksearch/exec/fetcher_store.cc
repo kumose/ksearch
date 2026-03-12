@@ -89,7 +89,7 @@ namespace ksearch {
 
     OnRPCDone::~OnRPCDone() {
         if (!_has_multi_plan && _op_type == pb::OP_SELECT) {
-            // batch rpc开始选地址时，没有AddAllocated
+            /// When batch RPC starts to select addresses, AddAllocated is not called.
             if (_is_batch && _batch_request.plan_size() > 0) {
                 _batch_request.mutable_plan()->ReleaseLast();
             } else if (!_is_batch) {
@@ -98,10 +98,10 @@ namespace ksearch {
         }
     }
 
-    // 检查状态，判断是否需要继续执行
+    // Check status to determine if execution should continue.
     ErrorType OnRPCDone::check_status() {
         if (_fetcher_store->error != E_OK) {
-            DB_DONE(WARNING, "recieve error, other region failed");
+            DB_DONE(WARNING, "receive error, other region failed");
             return _fetcher_store->error;
         }
 
@@ -131,7 +131,7 @@ namespace ksearch {
             pb::AnalyzeInfo *info = single_req.mutable_analyze_info();
             bool need_hist = false;
             if (_state->statistics_types == nullptr || _state->statistics_types->empty()) {
-                // 缺失的话和老版本一致
+                // If the field is missing, follow the same behavior as the old version.
                 info->add_statistics_types(pb::StatisticType::ST_CMSKETCH);
                 info->add_statistics_types(pb::StatisticType::ST_HISTOGRAM);
                 need_hist = true;

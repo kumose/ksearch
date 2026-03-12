@@ -369,9 +369,9 @@ kmcmake_cc_binary(
 
 kmcmake_cc_binary(
         NAMESPACE ${PROJECT_NAME}
-        NAME ksearch
+        NAME kmars
         SOURCES
-        server/ksearch.cc
+        server/kmars.cc
         raft_dummy/dummy_setter.cc
         CXXOPTS
         ${KMCMAKE_CXX_OPTIONS}

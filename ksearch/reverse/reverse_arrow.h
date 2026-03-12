@@ -14,6 +14,7 @@
 // limitations under the License.
 
 #pragma once
+#include <turbo/base/macros/basic.h>
 
 #ifdef SNAPPY
 #undef SNAPPY
@@ -124,16 +125,16 @@ namespace ksearch {
         }
 
         void add_node(const std::string &key, int8_t flag, double weight) {
-            _key_builder.Append(key);
-            _flag_builder.Append(flag);
-            _weight_builder.Append(weight);
+            TURBO_UNUSED(_key_builder.Append(key));
+            TURBO_UNUSED(_flag_builder.Append(flag));
+            TURBO_UNUSED(_weight_builder.Append(weight));
             ++_rows;
         }
 
         void add_node(ArrowReverseNode &node) {
-            _key_builder.Append(node.key());
-            _flag_builder.Append(node.flag());
-            _weight_builder.Append(node.weight());
+            TURBO_UNUSED(_key_builder.Append(node.key()));
+            TURBO_UNUSED(_flag_builder.Append(node.flag()));
+            TURBO_UNUSED(_weight_builder.Append(node.weight()));
             ++_rows;
         }
 
@@ -141,9 +142,9 @@ namespace ksearch {
             std::shared_ptr<arrow::Array> key_array;
             std::shared_ptr<arrow::Array> flag_array;
             std::shared_ptr<arrow::Array> weight_array;
-            _key_builder.Finish(&key_array);
-            _flag_builder.Finish(&flag_array);
-            _weight_builder.Finish(&weight_array);
+            TURBO_UNUSED(_key_builder.Finish(&key_array));
+            TURBO_UNUSED(_flag_builder.Finish(&flag_array));
+            TURBO_UNUSED(_weight_builder.Finish(&weight_array));
             _result = arrow::RecordBatch::Make(get_arrow_schema(), _rows, {key_array, flag_array, weight_array});
             set_internal_info();
         }
