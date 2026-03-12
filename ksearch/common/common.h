@@ -999,7 +999,7 @@ namespace ksearch {
 
         void put_incremental_info(const int64_t apply_index, T &infos) {
             int64_t cost = _the_earlist_time_for_background.get_time();
-            auto call_func = [=, this](DoubleBuffer<std::map<int64_t, T> > &buf) -> int {
+            auto call_func = [this,apply_index, infos, cost](DoubleBuffer<std::map<int64_t, T> > &buf) -> int {
                 auto background = buf.read_background();
                 auto frontground = buf.read();
                 //保证bg中最少有一个元素
