@@ -127,7 +127,7 @@ enum OpType {
     OP_OPEN_MIGRATE                         = 159;
     OP_UPDATE_SPLIT_LINES                   = 160; //修改表的region_split_lines, 调整分裂阈值
     OP_SET_INSTANCE_STATUS                  = 161; //修改各种实例状态
-    //OP_SET_NO_FULL                          = 162;
+    //OP_SET_NO_FULL                        = 162;
     OP_MODIFY_RESOURCE_TAG                  = 163;
     OP_MERGE_REGION                         = 164; //Region请求merge,serch dst region
     OP_UPDATE_MERGE_SWITCH                  = 165; //merge switch
@@ -170,4 +170,22 @@ enum OpType {
     OP_CREATE_VIEW                          = 202; // 新建视图
     OP_DROP_VIEW                            = 203; // 删除视图
     OP_DROP_INVALID_PRIVILEGE               = 204; // 删除不存在的数据库/表的权限
+
+    /// kns
+    /// Create a new KNS instance
+    OP_KNS_CREATE                          = 600;
+    /// Remove an existing KNS instance
+    OP_KNS_DROP                            = 601;
+    /// Stop a running KNS instance
+    OP_KNS_STOP                            = 602;
+    /// Resume a stopped KNS instance
+    OP_KNS_RESUME                          = 603;
+    /// Stop a specific peer node in KNS instance
+    OP_KNS_STOP_PEER                       = 604;
+    /// Resume a stopped peer node in KNS instance
+    OP_KNS_RESUME_PEER                     = 605;
+    /// Peer node reports its status to KNS manager
+    OP_KNS_PEER_UPDATE                     = 606;
+    OP_KNS_CREATE_PEER                       = 607;
+    OP_KNS_DROP_PEER                       = 608;
 };

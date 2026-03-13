@@ -26,17 +26,19 @@ namespace ksearch {
     struct TsoRequestTask {
         TsoRequestTask(const pb::TsoRequest *request, pb::TsoResponse *response, BthreadCond *cond,
                        int *send_request_ret)
-            : request(request), response(response), cond(cond), send_request_ret(send_request_ret),
-              timeout_flag(false) {
+            : request(request),
+              response(response),
+              send_request_ret(send_request_ret),
+              cond(cond) {
         }
 
         explicit TsoRequestTask(int64_t timer_id) : timeout_flag(true), timer_id(timer_id) {
         }
 
-        const pb::TsoRequest *request;
-        pb::TsoResponse *response;
+        const pb::TsoRequest *request{nullptr};
+        pb::TsoResponse *response{nullptr};
         int *send_request_ret = nullptr;
-        BthreadCond *cond;
+        BthreadCond *cond{nullptr};
         bool timeout_flag = false;
         int64_t timer_id = 0;
     };

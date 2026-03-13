@@ -33,9 +33,10 @@
 #include <ksearch/column/column_record.h>
 #include <ksearch/engine/rocksdb_filesystem.h>
 #include <ksearch/runtime/arrow_io_excutor.h>
+#include <turbo/base/macros.h>
 
 namespace ksearch {
-    DECLARE_int64 (parquet_cache_size_mb);
+    DECLARE_int64(parquet_cache_size_mb);
 
     struct ReadRange {
         int64_t offset;
@@ -270,7 +271,7 @@ namespace ksearch {
         }
 
         ~ParquetArrowReadableFile() override {
-            Close();
+            TURBO_UNUSED(Close());
         }
 
         static ::arrow::Result<std::shared_ptr<::arrow::io::RandomAccessFile> > Open(

@@ -2286,7 +2286,7 @@ namespace ksearch {
         }
         std::shared_ptr<arrow::ipc::RecordBatchWriter> ipc_writer = *make_writer_res;
         ScopeGuard auto_decrease([&ipc_writer]() {
-            ipc_writer->Close();
+            TURBO_UNUSED(ipc_writer->Close());
         });
         auto status = ipc_writer->WriteRecordBatch(*faiss_index->scalar_data);
         if (!status.ok()) {

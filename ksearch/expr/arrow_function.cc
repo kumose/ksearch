@@ -12,6 +12,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
 
 #include <ksearch/common/datetime.h>
 #include <ksearch/expr/arrow_function.h>
@@ -25,6 +26,7 @@
 #include <charconv>
 #include <ksearch/expr/slot_ref.h>
 #include <ksearch/expr/row_expr.h>
+#include <turbo/base/macros/basic.h>
 
 namespace ksearch {
     /*
@@ -1174,61 +1176,61 @@ namespace ksearch {
             BuilderType builder;
             switch (type) {
                 case pb::FLOAT: {
-                    arrow::VisitArraySpanInline<I>(
+                    TURBO_UNUSED(arrow::VisitArraySpanInline<I>(
                         input,
                         [&](InputValueCType v) {
                             char tmp_buf[24] = {0};
                             snprintf(tmp_buf, sizeof(tmp_buf), "%.6g", (double) v);
                             return builder.Append(std::string(tmp_buf));
                         },
-                        [&]() { return builder.AppendNull(); });
+                        [&]() { return builder.AppendNull(); }));
                     break;
                 }
                 case pb::DOUBLE: {
-                    arrow::VisitArraySpanInline<I>(
+                    TURBO_UNUSED(arrow::VisitArraySpanInline<I>(
                         input,
                         [&](InputValueCType v) {
                             char tmp_buf[24] = {0};
                             snprintf(tmp_buf, sizeof(tmp_buf), "%.12g", (double) v);
                             return builder.Append(std::string(tmp_buf));
                         },
-                        [&]() { return builder.AppendNull(); });
+                        [&]() { return builder.AppendNull(); }));
                     break;
                 }
                 case pb::DATETIME: {
-                    arrow::VisitArraySpanInline<I>(
+                    TURBO_UNUSED(arrow::VisitArraySpanInline<I>(
                         input,
                         [&](InputValueCType v) {
                             return builder.Append(datetime_to_str(v));
                         },
-                        [&]() { return builder.AppendNull(); });
+                        [&]() { return builder.AppendNull(); }));
                     break;
                 }
                 case pb::TIME: {
-                    arrow::VisitArraySpanInline<I>(
+                    TURBO_UNUSED(arrow::VisitArraySpanInline<I>(
                         input,
                         [&](InputValueCType v) {
                             return builder.Append(time_to_str(v));
                         },
-                        [&]() { return builder.AppendNull(); });
+                        [&]() { return builder.AppendNull(); }));
                     break;
                 }
                 case pb::TIMESTAMP: {
-                    arrow::VisitArraySpanInline<I>(
+                    TURBO_UNUSED(arrow::VisitArraySpanInline<I>(
                         input,
                         [&](InputValueCType v) {
                             return builder.Append(timestamp_to_str(v));
                         },
-                        [&]() { return builder.AppendNull(); });
+                        [&]() { return builder.AppendNull(); }));
                     break;
                 }
                 case pb::DATE: {
-                    arrow::VisitArraySpanInline<I>(
+                    TURBO_UNUSED(arrow::VisitArraySpanInline<I>(
                         input,
                         [&](InputValueCType v) {
                             return builder.Append(date_to_str(v));
                         },
-                        [&]() { return builder.AppendNull(); });
+                        [&]() { return builder.AppendNull(); }));
                     break;
                 }
                 default:

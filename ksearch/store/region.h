@@ -281,7 +281,7 @@ namespace ksearch {
         pb::ErrCode errcode;
         bool is_learner = false;
 
-        FollowerReadCond(bool is_learner, uint64_t id) : errcode(pb::SUCCESS), is_learner(is_learner), log_id(id) {
+        FollowerReadCond(bool is_learner, uint64_t id) : log_id(id), errcode(pb::SUCCESS), is_learner(is_learner) {
         };
 
         void set_failed() {

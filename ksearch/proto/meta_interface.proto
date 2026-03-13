@@ -44,6 +44,36 @@ message NameSpaceInfo {
     repeated BinlogInfo binlog_infos       = 17;
 };
 
+enum KnsStatus {
+    KNS_NORMAL = 0;
+    KNS_STOP = 1;
+}
+
+message KnsInfo {
+    required string kns_name         = 1;
+    optional int64  kns_id           = 2;
+    optional KnsStatus status        = 3;
+    optional int64  version          = 4;
+    optional bool if_exist           = 5;
+}
+
+enum KnsPeerStatus {
+    KNS_PEER_NORMAL = 0;
+    KNS_PEER_STOP = 1;
+}
+
+
+message KnsPeerInfo {
+    required string kns_name         = 1;
+    optional int64  kns_id           = 2;
+    required string peer_name        = 3;
+    optional int64  peer_id          = 4;
+    optional KnsPeerStatus status    = 5;
+    optional int64  version          = 6;
+    optional int64  timestamp        = 7;
+}
+
+
 message DataBaseInfo {
     required string database               = 1;
     optional int64 database_id             = 2;
@@ -651,6 +681,8 @@ message MetaManagerRequest {
     optional bool                is_dynamic_change      = 28; // 标识是否为动态分区变更
     optional bool                is_force_setting       = 29; // 标识是否为强制设置，用于删除默认配置
     repeated PartitionIndexInstance  partition_index_instance   = 30; // 建表 加索引 加分区状态及外选实例
+    optional KnsInfo             kns_info                   = 31;
+    optional KnsPeerInfo         kns_peer_info              = 32;
 };
 
 message CreateTableResponse {
@@ -669,6 +701,7 @@ message MetaManagerResponse {
     optional RegionMergeResponse merge_response         = 8;
     optional RegionRecoverResponse recover_response     = 9;
     optional CreateTableResponse create_table_response  = 10; // 用于新建普通表/视图
+    optional KnsResponse kns                            = 11;
 };
 
 message RegionRecoverResponse {
@@ -897,6 +930,9 @@ enum QueryOpType {
     QUERY_REGION_LEARNER_STATUS                   = 310;
     QUERY_FAST_IMPORTER_TABLES                    = 311;
     QUERY_BINLOG_TIMESTAMPS                       = 312;
+    ///
+    QUERY_KNS                                     = 400;
+    QUERY_KNS_PEER                                = 401;
 };
 
 message PhysicalInstance {
@@ -922,6 +958,8 @@ message QueryRequest {
     optional string resource_tag                  = 14;
     optional string str_region_id                 = 15;
     optional int64  table_id                      = 16;
+    optional string kns                           = 17;
+    optional string kns_peer                      = 18;
 };
 
 message ResourceTagInfo {
@@ -969,6 +1007,8 @@ message QueryResponse {
     repeated ResourceTagInfo    resource_tag_infos  = 24;
     repeated VirtualInfoAndSqls virtual_index_influence_info = 25;
     repeated BinlogRegionInfo   binlog_region_state = 26;
+    repeated KnsInfo            kns_infos = 27;
+    repeated KnsPeerInfo        kns_peers = 28;
 };
 
 message DdlPeerInfo {
@@ -1215,6 +1255,24 @@ message TsoResponse {
     optional int64           system_time       = 7;
     optional string          leader            = 8;
 };
+
+// KNS manager unified request
+// General request structure for all KNS management operations
+message KnsRequest {
+    // Name of the target KNS instance
+    optional string kns = 1;
+    // List of target peer nodes (for peer-specific operations)
+    repeated string peers = 2;
+};
+
+// KNS instance query response
+// Response containing KNS instance/peer status information
+message KnsResponse {
+    // Error code of the query operation
+    required ErrCode errcode = 1;
+    // Detailed error message (empty if success)
+    optional string errmsg = 2;
+}
 
 service MetaService {
     //meta_server raft的控制接口

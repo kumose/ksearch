@@ -19,45 +19,7 @@ import "ksearch/proto/raft.proto";
 
 package kns.pb;
 
-// KNS operation type enumeration
-// Used to define all supported operations for KNS (Ksearch Name Service)
-enum KnsOpType {
-    /// Default empty operation
-    KNS_NONE = 0;
-    /// Create a new KNS instance
-    KNS_CREATE = 1;
-    /// Remove an existing KNS instance
-    KNS_REMOVE = 2;
-    /// Stop a running KNS instance
-    KNS_STOP = 3;
-    /// Resume a stopped KNS instance
-    KNS_RESUME = 4;
 
-    /// Stop a specific peer node in KNS instance
-    KNS_STOP_PEER = 50;
-    /// Resume a stopped peer node in KNS instance
-    KNS_RESUME_PEER = 51;
-
-    /// Peer node reports its status to KNS manager
-    KNS_PEER_REPORT = 60;
-};
-
-// KNS error code enumeration
-// Standardized error codes for KNS operation responses
-enum KnsCode {
-    /// No error (success)
-    KC_NONE = 0;
-    /// KNS instance not found
-    KC_NOT_FOUND = 1;
-    /// KNS instance already exists
-    KC_ALREADY_EXISTS = 2;
-    /// KNS instance is stopped
-    KC_STOP = 3;
-    /// Target peer node is stopped
-    KC_STOP_PEER = 4;
-    /// Target peer node not found in KNS instance
-    KC_PEER_NOT_FOUND = 5;
-}
 
 // Peer node status enumeration
 // Represents the running status of a KNS peer node
@@ -95,31 +57,6 @@ message KnsReportRequest {
     required KnsPeer peer = 2;
 };
 
-// KNS manager unified request
-// General request structure for all KNS management operations
-message KnsManagerRequest {
-    // Type of operation to perform
-    required KnsOpType opcode = 1;
-    // Peer status report data (only valid for KNS_PEER_REPORT)
-    optional KnsReportRequest report = 2;
-    // Name of the target KNS instance
-    optional string kns = 3;
-    // List of target peer nodes (for peer-specific operations)
-    repeated string peers = 4;
-};
-
-// KNS manager unified response
-// General response structure for all KNS management operations
-message KnsManagerResponse {
-    // Error code of the operation
-    required KnsCode errcode = 1;
-    // Detailed error message (empty if success)
-    optional string errmsg = 2;
-    // Leader node of the KNS cluster (if applicable)
-    optional string leader = 3;
-    // Operation type corresponding to the request
-    required KnsOpType opcode = 4;
-};
 
 // KNS instance query request
 // Request to query KNS instance/peer status

@@ -117,17 +117,17 @@ namespace ksearch {
 
     private:
         NamespaceManager() : _max_namespace_id(0) {
-            bthread_mutex_init(&_namespace_mutex, NULL);
+            bthread_mutex_init(&_namespace_mutex, nullptr);
         }
 
-        std::string construct_namespace_key(int64_t namespace_id) {
+        static std::string construct_namespace_key(int64_t namespace_id) {
             std::string namespace_key = MetaServer::SCHEMA_IDENTIFY
                                         + MetaServer::NAMESPACE_SCHEMA_IDENTIFY;
             namespace_key.append((char *) &namespace_id, sizeof(int64_t));
             return namespace_key;
         }
 
-        std::string construct_max_namespace_id_key() {
+        static std::string construct_max_namespace_id_key() {
             std::string max_namespace_id_key = MetaServer::SCHEMA_IDENTIFY
                                                + MetaServer::MAX_ID_SCHEMA_IDENTIFY
                                                + SchemaManager::MAX_NAMESPACE_ID_KEY;

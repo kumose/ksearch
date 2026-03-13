@@ -101,9 +101,9 @@ namespace ksearch {
                     const bool is_local_pass_through)
                 : _log_id(log_id)
                   , _sender_fragment_instance_id(sender_fragment_instance_id)
+                  , _region_id(region_id)
                   , _receiver_destination(receiver_destination)
                   , _is_db_fragment(is_from_db)
-                  , _region_id(region_id)
                   , _is_local_pass_through(is_local_pass_through) {
             }
 
@@ -151,7 +151,7 @@ namespace ksearch {
             std::mutex _rpc_mtx;
             brpc::Channel _channel;
             std::shared_ptr<OnRPCDone> _closure;
-            brpc::CallId _call_id;
+            brpc::CallId _call_id{INVALID_BTHREAD_ID};
 
             // 接收方是自己, 那么发送的数据无需combine/压缩/解压, 直接内存传递
             bool _is_local_pass_through = false;

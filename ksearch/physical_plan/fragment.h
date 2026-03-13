@@ -97,7 +97,7 @@ namespace ksearch {
         int doing_cnt = 0;
 
         ExecQueryFragments(int64_t t, bool is_main_db, std::vector<SmartFragment> fragments)
-            : is_main_db(is_main_db), fragments(fragments), start_time(t) {
+            : start_time(t), is_main_db(is_main_db), fragments(fragments) {
             doing_cnt = fragments.size();
         }
 
@@ -106,7 +106,7 @@ namespace ksearch {
                 return;
             }
             for (auto &fragment: fragments) {
-                fragment->wait();
+                TURBO_UNUSED(fragment->wait());
                 if (fragment->root != nullptr) {
                     fragment->root->close(fragment->runtime_state);
                     ExecNode::destroy_tree(fragment->root);

@@ -33,7 +33,7 @@
 #include <ksearch/engine/rocksdb_filesystem.h>
 
 namespace ksearch {
-    DECLARE_int64 (retry_interval_us);
+    DECLARE_int64(retry_interval_us);
     DEFINE_int64(binlog_timeout_us, 10 * 1000 * 1000LL, "binlog timeout us : 10s");
     DEFINE_int64(binlog_warn_timeout_minute, 15, "binlog warn timeout min : 15min");
     DEFINE_int64(read_binlog_max_size_bytes, 100 * 1024 * 1024, "100M");
@@ -44,10 +44,10 @@ namespace ksearch {
     DEFINE_int64(binlog_use_seek_interval_min, 60, "1h");
     DEFINE_int64(offline_binlog_size_peer_sst, 1073741824LL, "defualt 1GB, -1 means no limit");
     DEFINE_bool(binlog_force_get, false, "false");
-    DECLARE_bool (use_binlog_cache);
-    DECLARE_int64 (print_time_us);
-    DECLARE_string (meta_server_bns);
-    DECLARE_string (db_path);
+    DECLARE_bool(use_binlog_cache);
+    DECLARE_int64(print_time_us);
+    DECLARE_string(meta_server_bns);
+    DECLARE_string(db_path);
 
 #define IF_DONE_SET_RESPONSE(done, errcode, err_message) \
     do {\
@@ -562,7 +562,7 @@ namespace ksearch {
 
         ON_SCOPE_EXIT(([this, table_iter]() {
             delete table_iter;
-        }));
+            }));
 
         bool is_first_ts = true;
         int64_t first_ts = 0;
@@ -995,7 +995,7 @@ namespace ksearch {
 
     BinlogReadMgr::BinlogReadMgr(int64_t region_id, int64_t begin_ts, const std::string &capture_ip, uint64_t log_id,
                                  int64_t need_read_cnt, bool is_read_offline_binlog) : _region_id(region_id),
-        _begin_ts(begin_ts), _capture_ip(capture_ip), _log_id(log_id), _need_read_cnt(need_read_cnt),
+        _begin_ts(begin_ts), _log_id(log_id), _need_read_cnt(need_read_cnt), _capture_ip(capture_ip),
         _read_offline_binlog(is_read_offline_binlog) {
         _rocksdb = RocksWrapper::get_instance();
         _oldest_ts_in_binlog_cf = _rocksdb->get_oldest_ts_in_binlog_cf();
@@ -1311,7 +1311,7 @@ namespace ksearch {
                 _commit_start_map.clear();
                 _start_binlog_map.clear();
                 _fake_binlog_map.clear();
-            });
+                });
 
             for (const auto &iter: _commit_start_map) {
                 if (iter.first == iter.second) {
@@ -1585,7 +1585,7 @@ namespace ksearch {
 
         ON_SCOPE_EXIT(([this, table_iter]() {
             delete table_iter;
-        }));
+            }));
 
         int64_t max_fake_binlog = 0;
         SmartRecord record = _factory->new_record(*binlog_table);
@@ -1695,12 +1695,11 @@ namespace ksearch {
         response->set_errcode(pb::SUCCESS);
         response->set_errmsg("read binlog success");
         // 下发binlog才缓存，否则ts推进不了
-        if (FLAGS_use_binlog_cache &&response
-        ->
-        binlogs_size() > 0
-                && !is_read_offline_binlog && !request->binlog_desc().flash_back_read()
-        )
-        {
+        if (FLAGS_use_binlog_cache && response
+            ->
+            binlogs_size() > 0
+            && !is_read_offline_binlog && !request->binlog_desc().flash_back_read()
+        ) {
             _binlog_cache.add(begin_ts, *response);
         }
         int64_t select_cost = cost.get_time();
@@ -1765,7 +1764,7 @@ namespace ksearch {
         _multi_thread_cond.increase();
         ON_SCOPE_EXIT([this]() {
             _multi_thread_cond.decrease_signal();
-        });
+            });
         _time_cost.reset();
         brpc::ClosureGuard done_guard(done);
         brpc::Controller *cntl = (brpc::Controller *) controller;
@@ -1911,8 +1910,9 @@ namespace ksearch {
     class OfflineBinlogSstWriter {
     public:
         OfflineBinlogSstWriter(int64_t table_id, int64_t region_id, OfflineBinlogType type,
-                               int64_t start_ts, int64_t end_ts) : _table_id(table_id), _region_id(region_id),
-                                                                   _type(type),
+                               int64_t start_ts, int64_t end_ts) : _type(type),
+                                                                   _table_id(table_id),
+                                                                   _region_id(region_id),
                                                                    _start_ts(start_ts), _end_ts(end_ts) {
             _tmp_file_name.clear();
             _external_files.clear();
@@ -2736,7 +2736,7 @@ namespace ksearch {
         }
         ON_SCOPE_EXIT([this]() {
             reset_region_status();
-        });
+            });
 
         if (write_offline_binlog_data() != 0) {
             return;

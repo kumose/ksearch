@@ -28,6 +28,8 @@
 #include <ksearch/meta_server/query_database_manager.h>
 #include <ksearch/meta_server/query_table_manager.h>
 #include <ksearch/meta_server/query_region_manager.h>
+#include <ksearch/meta_server/query_kns_manager.h>
+#include <ksearch/meta_server/query_kns_peer_manager.h>
 #include <ksearch/meta_server/meta_util.h>
 #include <ksearch/meta_server/meta_rocksdb.h>
 #include <ksearch/meta_server/ddl_manager.h>
@@ -57,6 +59,8 @@ namespace ksearch {
     const std::string MetaServer::DATABASE_SCHEMA_IDENTIFY(1, 0x03);
     const std::string MetaServer::TABLE_SCHEMA_IDENTIFY(1, 0x04);
     const std::string MetaServer::REGION_SCHEMA_IDENTIFY(1, 0x05);
+    const std::string MetaServer::KNS_SCHEMA_IDENTIFY(1, 0x06);
+    const std::string MetaServer::KNS_PEER_SCHEMA_IDENTIFY(1, 0x03);
 
     const std::string MetaServer::DDLWORK_IDENTIFY(1, 0x06);
     const std::string MetaServer::STATISTICS_IDENTIFY(1, 0x07);
@@ -337,7 +341,17 @@ namespace ksearch {
             || request->op_type() == pb::OP_UPDATE_DYNAMIC_PARTITION_ATTR
             || request->op_type() == pb::OP_DROP_PARTITION_TS
             || request->op_type() == pb::OP_UPDATE_CHARSET
-            || request->op_type() == pb::OP_SPECIFY_SPLIT_KEYS) {
+            || request->op_type() == pb::OP_SPECIFY_SPLIT_KEYS
+            || request->op_type() == pb::OP_KNS_CREATE
+            || request->op_type() == pb::OP_KNS_DROP
+            || request->op_type() == pb::OP_KNS_STOP
+            || request->op_type() == pb::OP_KNS_RESUME
+            || request->op_type() == pb::OP_KNS_STOP_PEER
+            || request->op_type() == pb::OP_KNS_RESUME_PEER
+            || request->op_type() == pb::OP_KNS_PEER_UPDATE
+            || request->op_type() == pb::OP_KNS_CREATE_PEER
+            || request->op_type() == pb::OP_KNS_DROP_PEER
+            ) {
             SchemaManager::get_instance()->process_schema_info(controller,
                                                                request,
                                                                response,
@@ -637,6 +651,14 @@ namespace ksearch {
             }
             case pb::QUERY_FAST_IMPORTER_TABLES: {
                 QueryTableManager::get_instance()->get_table_in_fast_importer(request, response);
+                break;
+            }
+            case pb::QUERY_KNS: {
+                QueryKnsManager::get_instance()->get_kns_info(request, response);
+                break;
+            }
+            case pb::QUERY_KNS_PEER: {
+                QueryKnsPeerManager::get_instance()->get_peer_info(request, response);
                 break;
             }
             default: {

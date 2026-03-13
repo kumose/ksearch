@@ -37,7 +37,6 @@ set(PROTO_FILES
         proto/statistics.proto
         proto/store_interface.proto
         proto/test_decode.proto
-        proto/kns.proto
 )
 
 kmcmake_cc_proto(
@@ -316,6 +315,8 @@ set(META_SERVER
         meta_server/common_state_machine.cc
         meta_server/database_manager.cc
         meta_server/ddl_manager.cc
+        meta_server/kns_manager.cc
+        meta_server/kns_peer_manager.cc
         meta_server/meta_rocksdb.cc
         meta_server/meta_server.cc
         meta_server/meta_state_machine.cc
@@ -328,6 +329,8 @@ set(META_SERVER
         meta_server/query_privilege_manager.cc
         meta_server/query_region_manager.cc
         meta_server/query_table_manager.cc
+        meta_server/query_kns_manager.cc
+        meta_server/query_kns_peer_manager.cc
         meta_server/region_manager.cc
         meta_server/schema_manager.cc
         meta_server/table_manager.cc
@@ -339,6 +342,21 @@ set(META_SERVER
 kmcmake_cc_binary(
         NAMESPACE ${PROJECT_NAME}
         NAME ksmeta
+        SOURCES
+        ${META_SERVER}
+        CXXOPTS
+        ${KMCMAKE_CXX_OPTIONS}
+        LINKS
+        ${PROJECT_NAME}::common_static
+        ${KMCMAKE_DEPS_LINK}
+        LINKOPTS
+        ${KMCMAKE_STATIC_BIN_OPTION}
+        PUBLIC
+)
+
+kmcmake_cc_binary(
+        NAMESPACE ${PROJECT_NAME}
+        NAME kns
         SOURCES
         ${META_SERVER}
         CXXOPTS

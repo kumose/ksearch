@@ -282,4 +282,4 @@ namespace ksearch {
             *db = db_info.second;
         }
     }
-} //namespace 
+}  // namespace

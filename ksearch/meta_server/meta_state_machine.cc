@@ -24,6 +24,8 @@
 #include <ksearch/meta_server/database_manager.h>
 #include <ksearch/meta_server/table_manager.h>
 #include <ksearch/meta_server/region_manager.h>
+#include <ksearch/meta_server/kns_manager.h>
+#include <ksearch/meta_server/kns_peer_manager.h>
 #include <ksearch/meta_server/meta_util.h>
 #include <ksearch/engine/rocks_wrapper.h>
 #include <ksearch/meta_server/query_cluster_manager.h>
@@ -514,6 +516,36 @@ namespace ksearch {
                 }
                 case pb::OP_SPECIFY_SPLIT_KEYS: {
                     TableManager::get_instance()->specify_split_keys(request, iter.index(), done);
+                    break;
+                }
+                case pb::OP_KNS_CREATE: {
+                    KnsManager::get_instance()->create_kns(request, done);
+                    break;
+                }
+                case pb::OP_KNS_DROP: {
+                    KnsManager::get_instance()->drop_kns(request, done);
+                    break;
+                }
+                case pb::OP_KNS_STOP:
+                case pb::OP_KNS_RESUME: {
+                    KnsManager::get_instance()->modify_kns(request, done);
+                    break;
+                }
+                case pb::OP_KNS_CREATE_PEER: {
+                    KnsPeerManager::get_instance()->create_peer(request, done);
+                    break;
+                }
+                case pb::OP_KNS_DROP_PEER: {
+                    KnsPeerManager::get_instance()->drop_peer(request, done);
+                    break;
+                }
+                case pb::OP_KNS_RESUME_PEER:
+                case pb::OP_KNS_STOP_PEER: {
+                    KnsPeerManager::get_instance()->modify_peer(request, done);
+                    break;
+                }
+                case pb::OP_KNS_PEER_UPDATE: {
+                    KnsPeerManager::get_instance()->peer_update(request, done);
                     break;
                 }
                 default: {

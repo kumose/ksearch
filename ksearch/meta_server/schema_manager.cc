@@ -20,6 +20,8 @@
 #include <ksearch/meta_server/database_manager.h>
 #include <ksearch/meta_server/namespace_manager.h>
 #include <ksearch/meta_server/region_manager.h>
+#include <ksearch/meta_server/kns_manager.h>
+#include <ksearch/meta_server/kns_peer_manager.h>
 #include <ksearch/meta_server/ddl_manager.h>
 #include <ksearch/meta_server/meta_util.h>
 #include <ksearch/engine/rocks_wrapper.h>
@@ -30,6 +32,8 @@ namespace ksearch {
     const std::string SchemaManager::MAX_DATABASE_ID_KEY = "max_database_id";
     const std::string SchemaManager::MAX_TABLE_ID_KEY = "max_table_id";
     const std::string SchemaManager::MAX_REGION_ID_KEY = "max_region_id";
+    const std::string SchemaManager::MAX_KNS_ID_KEY = "max_kns_id";
+    const std::string SchemaManager::MAX_KNS_PEER_ID_KEY = "max_kns_peer_id";
 
     /*
  *  该方法除了service层调用之外，schema自身也需要调用
@@ -51,8 +55,8 @@ namespace ksearch {
             return;
         }
         uint64_t log_id = 0;
-        brpc::Controller *cntl = NULL;
-        if (controller != NULL) {
+        brpc::Controller *cntl = nullptr;
+        if (controller != nullptr) {
             cntl = static_cast<brpc::Controller *>(controller);
             if (cntl->has_log_id()) {
                 log_id = cntl->log_id();
@@ -77,6 +81,43 @@ namespace ksearch {
                 // if (request->op_type() == pb::OP_MODIFY_NAMESPACE
                 //         && !request->namespace_info().has_quota()) {
                 //     ERROR_SET_RESPONSE(response, pb::INPUT_PARAM_ERROR, 
+                //             "no namespace_quota", request->op_type(), log_id);
+                //     return;
+                // }
+                _meta_state_machine->process(controller, request, response, done_guard.release());
+                return;
+            }
+            case pb::OP_KNS_CREATE:
+            case pb::OP_KNS_DROP:
+            case pb::OP_KNS_RESUME:
+            case pb::OP_KNS_STOP: {
+                if (!request->has_kns_info()) {
+                    ERROR_SET_RESPONSE(response, pb::INPUT_PARAM_ERROR,
+                                       "no kns_info", request->op_type(), log_id);
+                    return;
+                }
+                // if (request->op_type() == pb::OP_MODIFY_NAMESPACE
+                //         && !request->namespace_info().has_quota()) {
+                //     ERROR_SET_RESPONSE(response, pb::INPUT_PARAM_ERROR,
+                //             "no namespace_quota", request->op_type(), log_id);
+                //     return;
+                // }
+                _meta_state_machine->process(controller, request, response, done_guard.release());
+                return;
+            }
+            case pb::OP_KNS_CREATE_PEER:
+            case pb::OP_KNS_DROP_PEER:
+            case pb::OP_KNS_STOP_PEER:
+            case pb::OP_KNS_PEER_UPDATE:
+            case pb::OP_KNS_RESUME_PEER: {
+                if (!request->has_kns_peer_info()) {
+                    ERROR_SET_RESPONSE(response, pb::INPUT_PARAM_ERROR,
+                                       "no kns_peer_info", request->op_type(), log_id);
+                    return;
+                }
+                // if (request->op_type() == pb::OP_MODIFY_NAMESPACE
+                //         && !request->namespace_info().has_quota()) {
+                //     ERROR_SET_RESPONSE(response, pb::INPUT_PARAM_ERROR,
                 //             "no namespace_quota", request->op_type(), log_id);
                 //     return;
                 // }
@@ -705,6 +746,12 @@ namespace ksearch {
         std::string database_prefix = MetaServer::SCHEMA_IDENTIFY;
         database_prefix += MetaServer::DATABASE_SCHEMA_IDENTIFY;
 
+        std::string kns_prefix = MetaServer::SCHEMA_IDENTIFY;
+        kns_prefix += MetaServer::KNS_SCHEMA_IDENTIFY;
+
+        std::string kns_peer_prefix = MetaServer::SCHEMA_IDENTIFY;
+        kns_peer_prefix += MetaServer::KNS_PEER_SCHEMA_IDENTIFY;
+
         std::string table_prefix = MetaServer::SCHEMA_IDENTIFY;
         table_prefix += MetaServer::TABLE_SCHEMA_IDENTIFY;
 
@@ -729,6 +776,10 @@ namespace ksearch {
                 ret = TableManager::get_instance()->load_table_snapshot(iter->value().ToString());
             } else if (iter->key().starts_with(database_prefix)) {
                 ret = DatabaseManager::get_instance()->load_database_snapshot(iter->value().ToString());
+            }  else if (iter->key().starts_with(kns_prefix)) {
+                ret = KnsManager::get_instance()->load_kns_snapshot(iter->value().ToString());
+            } else if (iter->key().starts_with(kns_peer_prefix)) {
+                ret = KnsPeerManager::get_instance()->load_peer_snapshot(iter->value().ToString());
             } else if (iter->key().starts_with(namespace_prefix)) {
                 ret = NamespaceManager::get_instance()->load_namespace_snapshot(iter->value().ToString());
             } else if (iter->key().starts_with(max_id_prefix)) {
@@ -1317,6 +1368,16 @@ namespace ksearch {
         if (max_key == SchemaManager::MAX_REGION_ID_KEY) {
             RegionManager::get_instance()->set_max_region_id(*max_id);
             DB_WARNING("max_region_id:%ld", *max_id);
+            return 0;
+        }
+        if (max_key == SchemaManager::MAX_KNS_ID_KEY) {
+            KnsManager::get_instance()->set_max_kns_id(*max_id);
+            DB_WARNING("max_kns_id:%ld", *max_id);
+            return 0;
+        }
+        if (max_key == SchemaManager::MAX_KNS_PEER_ID_KEY) {
+            KnsPeerManager::get_instance()->set_max_peer_id(*max_id);
+            DB_WARNING("max_kns_peer_id:%ld", *max_id);
             return 0;
         }
         return 0;

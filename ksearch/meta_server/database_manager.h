@@ -121,17 +121,17 @@ namespace ksearch {
 
     private:
         DatabaseManager() : _max_database_id(0) {
-            bthread_mutex_init(&_database_mutex, NULL);
+            bthread_mutex_init(&_database_mutex,  nullptr);
         }
 
-        std::string construct_database_key(int64_t database_id) {
+       static  std::string construct_database_key(int64_t database_id) {
             std::string database_key = MetaServer::SCHEMA_IDENTIFY
                                        + MetaServer::DATABASE_SCHEMA_IDENTIFY;
             database_key.append((char *) &database_id, sizeof(int64_t));
             return database_key;
         }
 
-        std::string construct_max_database_id_key() {
+        static std::string construct_max_database_id_key() {
             std::string max_database_id_key = MetaServer::SCHEMA_IDENTIFY
                                               + MetaServer::MAX_ID_SCHEMA_IDENTIFY
                                               + SchemaManager::MAX_DATABASE_ID_KEY;
@@ -152,4 +152,4 @@ namespace ksearch {
         std::unordered_map<int64_t, pb::DataBaseInfo> _database_info_map;
         std::unordered_map<int64_t, std::set<int64_t> > _table_ids;
     }; //class
-} //namespace
+}  // namespace

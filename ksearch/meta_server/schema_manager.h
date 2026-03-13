@@ -29,6 +29,8 @@ namespace ksearch {
         static const std::string MAX_DATABASE_ID_KEY;
         static const std::string MAX_TABLE_ID_KEY;
         static const std::string MAX_REGION_ID_KEY;
+        static const std::string MAX_KNS_ID_KEY;
+        static const std::string MAX_KNS_PEER_ID_KEY;
 
         static SchemaManager *get_instance() {
             static SchemaManager instance;
