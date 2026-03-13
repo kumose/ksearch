@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
     static bvar::Status<std::string> ksearch_version("ksearch_version", "");
     ksearch_version.set_value(KSEARCH_REVISION);
 #endif
-    google::SetCommandLineOption("flagfile", "conf/ksmeta.conf");
+    google::SetCommandLineOption("flagfile", "conf/kns.conf");
     google::ParseCommandLineFlags(&argc, &argv, true);
     boost::filesystem::path remove_path("init.success");
     boost::filesystem::remove_all(remove_path);
@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
         return -1;
     }
     DB_WARNING("log file load success");
-
+    LOG(INFO)<<"log file load success";
     // 注册自定义的raft log的存储方式
     ksearch::register_myraft_extension();
 
@@ -68,7 +68,6 @@ int main(int argc, char **argv) {
     int ret = 0;
     //this step must be before server.Start
     std::vector<braft::PeerId> peers;
-    std::vector<std::string> instances;
     bool completely_deploy = false;
     bool use_bns = false;
 
@@ -77,6 +76,7 @@ int main(int argc, char **argv) {
     boost::split(list_raft_peers, ksearch::FLAGS_meta_server_bns, boost::is_any_of(","));
     for (auto &raft_peer: list_raft_peers) {
         DB_WARNING("raft_peer:%s", raft_peer.c_str());
+        std::cerr << "raft_peer:" << raft_peer << std::endl;
         braft::PeerId peer(raft_peer);
         peers.push_back(peer);
     }
@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
         return -1;
     }
     //启动端口
-    if (server.Start(addr, NULL) != 0) {
+    if (server.Start(addr, nullptr) != 0) {
         DB_FATAL("Fail to start server");
         return -1;
     }

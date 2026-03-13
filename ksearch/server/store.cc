@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
     static bvar::Status<std::string> ksearch_version("ksearch_version", "");
     ksearch_version.set_value(KSEARCH_REVISION);
 #endif
-    google::SetCommandLineOption("flagfile", "conf/gflags.conf");
+    google::SetCommandLineOption("flagfile", "conf/ksstore.conf");
     google::ParseCommandLineFlags(&argc, &argv, true);
     srand((unsigned) time(NULL));
     boost::filesystem::path remove_path("init.success");

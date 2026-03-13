@@ -96,6 +96,7 @@ set(LIB_SRC
         common/histogram.cc
         common/hll_common.cc
         common/information_schema.cc
+        common/log.cc
         common/memory_profile.cc
         common/meta_server_interact.cc
         common/mut_table_key.cc
@@ -335,7 +336,6 @@ set(META_SERVER
         meta_server/schema_manager.cc
         meta_server/table_manager.cc
         meta_server/tso_state_machine.cc
-        server/meta.cc
 )
 
 
@@ -344,6 +344,7 @@ kmcmake_cc_binary(
         NAME ksmeta
         SOURCES
         ${META_SERVER}
+        server/meta.cc
         CXXOPTS
         ${KMCMAKE_CXX_OPTIONS}
         LINKS
@@ -359,6 +360,7 @@ kmcmake_cc_binary(
         NAME kns
         SOURCES
         ${META_SERVER}
+        server/kns.cc
         CXXOPTS
         ${KMCMAKE_CXX_OPTIONS}
         LINKS
@@ -397,6 +399,20 @@ kmcmake_cc_binary(
         ${KMCMAKE_CXX_OPTIONS}
         LINKS
         ${PROJECT_NAME}::common_static
+        ${KMCMAKE_DEPS_LINK}
+        LINKOPTS
+        ${KMCMAKE_STATIC_BIN_OPTION}
+        PUBLIC
+)
+
+kmcmake_cc_binary(
+        NAMESPACE ${PROJECT_NAME}
+        NAME tlog
+        SOURCES
+        server/tglog.cc
+        CXXOPTS
+        ${KMCMAKE_CXX_OPTIONS}
+        LINKS
         ${KMCMAKE_DEPS_LINK}
         LINKOPTS
         ${KMCMAKE_STATIC_BIN_OPTION}

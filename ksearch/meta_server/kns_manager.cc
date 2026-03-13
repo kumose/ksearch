@@ -39,6 +39,7 @@ namespace ksearch {
         int64_t tmp_kns_id = _max_kns_id + 1;
         kns_info.set_kns_id(tmp_kns_id);
         kns_info.set_version(1);
+        kns_info.set_status(pb::KNS_NORMAL);
 
         std::string kns_value;
         if (!kns_info.SerializeToString(&kns_value)) {
