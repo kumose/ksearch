@@ -1,5 +1,5 @@
-// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 // Copyright (c) 2018-present Baidu, Inc. All Rights Reserved.
+// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
     static bvar::Status<std::string> ksearch_version("ksearch_version", "");
     ksearch_version.set_value(KSEARCH_REVISION);
 #endif
-    google::SetCommandLineOption("flagfile", "conf/gflags.conf");
+    google::SetCommandLineOption("flagfile", "conf/ksmeta.conf");
     google::ParseCommandLineFlags(&argc, &argv, true);
     boost::filesystem::path remove_path("init.success");
     boost::filesystem::remove_all(remove_path);

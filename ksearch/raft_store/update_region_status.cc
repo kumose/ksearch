@@ -1,5 +1,5 @@
-// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 // Copyright (c) 2018-present Baidu, Inc. All Rights Reserved.
+// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 
 namespace ksearch {
     void UpdateRegionStatus::reset_region_status(int64_t region_id) {
-        DB_WARNING("region status was reset, reigon_id: %ld", region_id);
+        DB_WARNING("region status was reset, region_id: %ld", region_id);
         Store::get_instance()->reset_region_status(region_id);
     }
 }

@@ -1,5 +1,5 @@
-// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 // Copyright (c) 2018-present Baidu, Inc. All Rights Reserved.
+// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@
 #include <ksearch/meta_server/database_manager.h>
 #include <ksearch/meta_server/table_manager.h>
 #include <ksearch/meta_server/region_manager.h>
+#include <ksearch/meta_server/kns_manager.h>
+#include <ksearch/meta_server/kns_peer_manager.h>
 #include <ksearch/meta_server/meta_util.h>
 #include <ksearch/engine/rocks_wrapper.h>
 #include <ksearch/meta_server/query_cluster_manager.h>
@@ -516,6 +518,36 @@ namespace ksearch {
                     TableManager::get_instance()->specify_split_keys(request, iter.index(), done);
                     break;
                 }
+                case pb::OP_KNS_CREATE: {
+                    KnsManager::get_instance()->create_kns(request, done);
+                    break;
+                }
+                case pb::OP_KNS_DROP: {
+                    KnsManager::get_instance()->drop_kns(request, done);
+                    break;
+                }
+                case pb::OP_KNS_STOP:
+                case pb::OP_KNS_RESUME: {
+                    KnsManager::get_instance()->modify_kns(request, done);
+                    break;
+                }
+                case pb::OP_KNS_CREATE_PEER: {
+                    KnsPeerManager::get_instance()->create_peer(request, done);
+                    break;
+                }
+                case pb::OP_KNS_DROP_PEER: {
+                    KnsPeerManager::get_instance()->drop_peer(request, done);
+                    break;
+                }
+                case pb::OP_KNS_RESUME_PEER:
+                case pb::OP_KNS_STOP_PEER: {
+                    KnsPeerManager::get_instance()->modify_peer(request, done);
+                    break;
+                }
+                case pb::OP_KNS_PEER_UPDATE: {
+                    KnsPeerManager::get_instance()->peer_update(request, done);
+                    break;
+                }
                 default: {
                     DB_FATAL("unsupport request type, type:%d", request.op_type());
                     IF_DONE_SET_RESPONSE(done, pb::UNSUPPORT_REQ_TYPE, "unsupport request type");
@@ -536,7 +568,7 @@ namespace ksearch {
                    DatabaseManager::get_instance()->get_max_database_id(),
                    TableManager::get_instance()->get_max_table_id(),
                    RegionManager::get_instance()->get_max_region_id());
-        //创建snapshot
+        // create snapshot
         rocksdb::ReadOptions read_options;
         read_options.prefix_same_as_start = false;
         read_options.total_order_seek = true;

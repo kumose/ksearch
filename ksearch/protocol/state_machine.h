@@ -1,5 +1,5 @@
-// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 // Copyright (c) 2018-present Baidu, Inc. All Rights Reserved.
+// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -166,8 +166,6 @@ namespace ksearch {
 
         bvar::LatencyRecorder dml_time_cost;
         bvar::LatencyRecorder select_time_cost;
-        bvar::LatencyRecorder mpp_time_cost;
-        bvar::LatencyRecorder vectorize_time_cost;
         bvar::LatencyRecorder txn_alive_time_cost;
         bvar::Adder<int> sql_error;
         bvar::PerSecond<bvar::Adder<int> > sql_error_second;
@@ -175,6 +173,9 @@ namespace ksearch {
         bvar::PerSecond<bvar::Adder<int> > exec_sql_error_second;
         bvar::IntRecorder hit_cache;
         bvar::Window<bvar::IntRecorder> hit_cache_ratio;
+        bvar::LatencyRecorder vectorize_time_cost;
+        bvar::LatencyRecorder mpp_time_cost;
+
         std::unordered_map<std::string, std::unique_ptr<bvar::LatencyRecorder> > select_by_users;
         std::unordered_map<std::string, std::unique_ptr<bvar::LatencyRecorder> > dml_by_users;
         std::mutex _mutex;

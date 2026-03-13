@@ -1,5 +1,5 @@
-// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 // Copyright (c) 2018-2025 Baidu, Inc. All Rights Reserved.
+// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@
 #include <parquet/file_writer.h>
 #include <parquet/arrow/schema.h>
 #include <ksearch/column/column_record.h>
+#include <turbo/base/macros/basic.h>
 
 namespace ksearch {
     enum ColumnCompactionType {
@@ -73,7 +74,7 @@ namespace ksearch {
     class SingleFileWriter {
     public:
         ~SingleFileWriter() {
-            close();
+            TURBO_UNUSED(close());
             boost::filesystem::path path(_file_name);
             if (boost::filesystem::exists(path)) {
                 boost::filesystem::remove(path);

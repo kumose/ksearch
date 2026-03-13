@@ -1,5 +1,5 @@
-// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 // Copyright (c) 2018-present Baidu, Inc. All Rights Reserved.
+// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,80 +19,6 @@
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
-extern int com_writelog(const char *name, const char *fmt, ...) __attribute__
-
-((format
-(printf
-,
-2
-,
-3
-)
-)
-);
-#undef CHECK_LOG_FORMAT
-#ifdef CHECK_LOG_FORMAT
-void DB_WARNING(const char *fmt, ...) __attribute__((format(printf,1,2)));
-inline void DB_WARNING(const char *fmt, ...) {
-}
-void DB_FATAL(const char *fmt, ...) __attribute__((format(printf,1,2)));
-inline void DB_FATAL(const char *fmt, ...) {
-}
-void DB_DEBUG(const char *fmt, ...) __attribute__((format(printf,1,2)));
-inline void DB_DEBUG(const char *fmt, ...) {
-}
-void DB_TRACE(const char *fmt, ...) __attribute__((format(printf,1,2)));
-inline void DB_TRACE(const char *fmt, ...) {
-}
-void DB_NOTICE(const char *fmt, ...) __attribute__((format(printf,1,2)));
-inline void DB_NOTICE(const char *fmt, ...) {
-}
-#define DB_NOTICE_LONG DB_NOTICE
-
-void SELF_TRACE(const char *fmt, ...) __attribute__((format(printf,1,2)));
-inline void SELF_TRACE(const char *fmt, ...) {
-}
-void SQL_TRACE(const char *fmt, ...) __attribute__((format(printf,1,2)));
-inline void SQL_TRACE(const char *fmt, ...) {
-}
-
-template<typename T>
-void DB_WARNING_CLIENT(T sock, const char *fmt, ...) __attribute__((format(printf,2,3)));
-template<typename T>
-void DB_WARNING_CLIENT(T sock, const char *fmt, ...) {
-}
-template<typename T>
-void DB_FATAL_CLIENT(T sock, const char *fmt, ...) __attribute__((format(printf,2,3)));
-template<typename T>
-void DB_FATAL_CLIENT(T sock, const char *fmt, ...) {
-}
-template<typename T>
-void DB_DEBUG_CLIENT(T sock, const char *fmt, ...) __attribute__((format(printf,2,3)));
-template<typename T>
-void DB_DEBUG_CLIENT(T sock, const char *fmt, ...) {
-}
-template<typename T>
-void DB_TRACE_CLIENT(T sock, const char *fmt, ...) __attribute__((format(printf,2,3)));
-template<typename T>
-void DB_TRACE_CLIENT(T sock, const char *fmt, ...) {
-}
-template<typename T>
-void DB_NOTICE_CLIENT(const char *fmt, ...) __attribute__((format(printf,1,2)));
-template<typename T>
-void DB_NOTICE_CLIENT(const char *fmt, ...) {
-}
-
-template<typename T>
-void DB_WARNING_STATE(T sock, const char *fmt, ...) __attribute__((format(printf,2,3)));
-template<typename T>
-void DB_WARNING_STATE(T sock, const char *fmt, ...) {
-}
-template<typename T>
-void DB_FATAL_STATE(T sock, const char *fmt, ...) __attribute__((format(printf,2,3)));
-template<typename T>
-void DB_FATAL_STATE(T sock, const char *fmt, ...) {
-}
-#endif //CHECK_LOG_FORMAT
 
 namespace ksearch {
     DECLARE_bool (enable_debug);
@@ -291,31 +217,6 @@ namespace ksearch {
     } while (0);
 #endif
 
-    inline int init_log(const char *bin_name) {
-        ::google::InitGoogleLogging(bin_name);
-        FLAGS_max_log_size = MAX_LOG_LEN;
-        FLAGS_stop_logging_if_full_disk = true;
-        FLAGS_logbufsecs = 0;
-        FLAGS_logtostderr = false;
-        FLAGS_alsologtostderr = false;
-        FLAGS_log_dir = "";
-        ::google::SetLogDestination(google::GLOG_INFO, "log/task_info_log.");
-        ::google::SetLogDestination(google::GLOG_WARNING, "log/task_warning_log.");
-        ::google::SetLogDestination(google::GLOG_ERROR, "log/task_error_log.");
+    int init_log(const char *bin_name);
 
-        if (FLAGS_servitysinglelog) {
-            auto old_logger1 = google::base::GetLogger(google::GLOG_INFO);
-            auto my_logger1 = new SingleLogFileObject(old_logger1, google::GLOG_INFO);
-            google::base::SetLogger(google::GLOG_INFO, my_logger1);
-
-            auto old_logger2 = google::base::GetLogger(google::GLOG_WARNING);
-            auto my_logger2 = new SingleLogFileObject(old_logger2, google::GLOG_WARNING);
-            google::base::SetLogger(google::GLOG_WARNING, my_logger2);
-
-            auto old_logger3 = google::base::GetLogger(google::GLOG_ERROR);
-            auto my_logger3 = new SingleLogFileObject(old_logger3, google::GLOG_ERROR);
-            google::base::SetLogger(google::GLOG_ERROR, my_logger3);
-        }
-        return 0;
-    }
-} //namespace ksearch
+}  // namespace ksearch

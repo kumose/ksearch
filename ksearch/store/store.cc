@@ -1,5 +1,5 @@
-// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 // Copyright (c) 2018-present Baidu, Inc. All Rights Reserved.
+// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -692,7 +692,7 @@ namespace ksearch {
                     single_response.set_errmsg("region_id not exist in store");
                     single_response.set_orig_region_id(single_region_req->region_id());
                     batch_response->mutable_store_res(i)->Swap(&single_response);
-                    single_region_req->release_plan();
+                    TURBO_UNUSED(single_region_req->release_plan());
                     return;
                 }
                 region->query(controller,
@@ -701,8 +701,7 @@ namespace ksearch {
                               nullptr);
                 single_response.set_orig_region_id(single_region_req->region_id());
                 batch_response->mutable_store_res(i)->Swap(&single_response);
-                single_region_req->release_plan();
-                return;
+                TURBO_UNUSED(single_region_req->release_plan());
             };
             batch_query_bth.run(batch_query_call);
         }
@@ -1228,8 +1227,8 @@ namespace ksearch {
                     rocks_external_files.emplace(f);
                     info->add_external_full_path(f);
                     uint64_t size;
-                    int ret = get_size_by_external_file_name(&size, nullptr, f);
-                    if (ret != 0) {
+                    int r = get_size_by_external_file_name(&size, nullptr, f);
+                    if (r != 0) {
                         continue;
                     }
                     total_size += size;

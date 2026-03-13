@@ -1,5 +1,5 @@
-// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 // Copyright (c) 2018-present Baidu, Inc. All Rights Reserved.
+// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -5599,7 +5599,7 @@ namespace ksearch {
                 std::string link_path = dir + "/link." + out_path;
                 // 建一个硬链接，通过ingest采用move方式，可以不用修改异常恢复流程
                 // 失败了说明之前创建过，可忽略
-                link(child_path.c_str(), link_path.c_str());
+                TURBO_UNUSED(link(child_path.c_str(), link_path.c_str()));
                 DB_WARNING("region_id: %ld, ingest file:%s", _region_id, link_path.c_str());
                 // 重启过程无需等待
                 if (is_addpeer() && !_restart) {

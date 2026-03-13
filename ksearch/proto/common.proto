@@ -1,5 +1,5 @@
-// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 // Copyright (c) 2018-2025 Baidu, Inc. All Rights Reserved.
+// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -57,7 +57,21 @@ enum ErrCode {
     COMPACTION_FILE_SYSTEM_ERROR = 34;
     REMOTE_COMPACTION_ERROR = 35;
     COMPACTION_FILE_NOT_EXIST = 36;
+    /// KNS error code enumeration
+    /// Standardized error codes for KNS operation responses
+    /// KNS instance not found
+    KC_NOT_FOUND = 37;
+    /// KNS instance already exists
+    KC_ALREADY_EXISTS = 38;
+    /// KNS instance is stopped
+    KC_STOP = 39;
+    /// Target peer node is stopped
+    KC_STOP_PEER = 40;
+    /// Target peer node not found in KNS instance
+    KC_PEER_NOT_FOUND = 41;
 };
+
+
 
 enum PrimitiveType {
     INVALID_TYPE = 0;

@@ -1,5 +1,5 @@
-// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 // Copyright (c) 2018-present Baidu, Inc. All Rights Reserved.
+// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #include <arrow/api.h>
 #include <ksearch/common/expr_value.h>
 #include <ksearch/common/schema_factory.h>
+#include <turbo/base/macros/basic.h>
 
 // 能否复用Chunk TODO
 namespace ksearch {
@@ -65,7 +66,7 @@ namespace ksearch {
     class ColumnRecord {
     public:
         ColumnRecord(const std::shared_ptr<arrow::Schema> &schema,
-                     int capacity) : _schema(schema), _capacity(capacity) {
+                     int capacity) : _capacity(capacity), _schema(schema) {
         };
 
         virtual ~ColumnRecord() {
@@ -130,7 +131,7 @@ namespace ksearch {
 
         void reserve(int row_size) {
             for (auto &builder: _builders) {
-                builder->Reserve(row_size);
+                TURBO_UNUSED(builder->Reserve(row_size));
             }
         }
 

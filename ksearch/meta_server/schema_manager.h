@@ -1,5 +1,5 @@
-// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 // Copyright (c) 2018-present Baidu, Inc. All Rights Reserved.
+// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ namespace ksearch {
         static const std::string MAX_DATABASE_ID_KEY;
         static const std::string MAX_TABLE_ID_KEY;
         static const std::string MAX_REGION_ID_KEY;
+        static const std::string MAX_KNS_ID_KEY;
+        static const std::string MAX_KNS_PEER_ID_KEY;
 
         static SchemaManager *get_instance() {
             static SchemaManager instance;

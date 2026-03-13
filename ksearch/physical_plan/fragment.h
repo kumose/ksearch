@@ -1,5 +1,5 @@
-// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 // Copyright (c) 2018-present Baidu, Inc. All Rights Reserved.
+// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ namespace ksearch {
         int doing_cnt = 0;
 
         ExecQueryFragments(int64_t t, bool is_main_db, std::vector<SmartFragment> fragments)
-            : is_main_db(is_main_db), fragments(fragments), start_time(t) {
+            : start_time(t), is_main_db(is_main_db), fragments(fragments) {
             doing_cnt = fragments.size();
         }
 
@@ -106,7 +106,7 @@ namespace ksearch {
                 return;
             }
             for (auto &fragment: fragments) {
-                fragment->wait();
+                TURBO_UNUSED(fragment->wait());
                 if (fragment->root != nullptr) {
                     fragment->root->close(fragment->runtime_state);
                     ExecNode::destroy_tree(fragment->root);

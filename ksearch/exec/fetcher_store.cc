@@ -1,5 +1,5 @@
-// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 // Copyright (c) 2018-present Baidu, Inc. All Rights Reserved.
+// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -91,9 +91,9 @@ namespace ksearch {
         if (!_has_multi_plan && _op_type == pb::OP_SELECT) {
             /// When batch RPC starts to select addresses, AddAllocated is not called.
             if (_is_batch && _batch_request.plan_size() > 0) {
-                _batch_request.mutable_plan()->ReleaseLast();
+                TURBO_UNUSED(_batch_request.mutable_plan()->ReleaseLast());
             } else if (!_is_batch) {
-                _request.release_plan();
+                TURBO_UNUSED(_request.release_plan());
             }
         }
     }
@@ -527,7 +527,7 @@ namespace ksearch {
         if (!_state->is_ddl_work() && op_type == pb::OP_SELECT && _state->explain_type == EXPLAIN_NULL) {
             int32_t sql_exec_time_left = FLAGS_fetcher_request_timeout;
             if (FLAGS_sql_exec_timeout > 0) {
-                int64_t sql_exec_time_left = std::min(FLAGS_sql_exec_timeout - _state->get_cost_time() / 1000,
+                sql_exec_time_left = std::min(FLAGS_sql_exec_timeout - _state->get_cost_time() / 1000,
                                                       FLAGS_fetcher_request_timeout * 1L);
                 if (sql_exec_time_left <= 0) {
                     DB_WARNING("logid: %lu, sql exec timeout, op_type: %d, total_cost: %ld", _state->log_id(),

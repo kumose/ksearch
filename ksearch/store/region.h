@@ -1,5 +1,5 @@
-// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 // Copyright (c) 2018-present Baidu, Inc. All Rights Reserved.
+// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -281,7 +281,7 @@ namespace ksearch {
         pb::ErrCode errcode;
         bool is_learner = false;
 
-        FollowerReadCond(bool is_learner, uint64_t id) : errcode(pb::SUCCESS), is_learner(is_learner), log_id(id) {
+        FollowerReadCond(bool is_learner, uint64_t id) : log_id(id), errcode(pb::SUCCESS), is_learner(is_learner) {
         };
 
         void set_failed() {

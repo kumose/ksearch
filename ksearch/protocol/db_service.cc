@@ -1,5 +1,5 @@
-// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 // Copyright (c) 2018-2025 Baidu, Inc. All Rights Reserved.
+// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -499,7 +499,7 @@ namespace ksearch {
             executor->future = arrow::acero::DeclarationToTableAsync(
                 arrow::acero::Declaration::Sequence(std::move(state->acero_declarations)), true);
             executor->future.AddCallback(
-                [this, log_id, fragment_ptr, cur_time, &mpp_fragment_latency, batch_fragments](
+                [this, log_id, fragment_ptr, cur_time, batch_fragments](
             arrow::Result<std::shared_ptr<arrow::Table> > result_) {
                     bool destory_all = false;
                     ON_SCOPE_EXIT(([this, &fragment_ptr, &result_, &destory_all, batch_fragments]() {

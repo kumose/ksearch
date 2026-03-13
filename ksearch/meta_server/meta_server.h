@@ -1,5 +1,5 @@
-// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 // Copyright (c) 2018-present Baidu, Inc. All Rights Reserved.
+// Copyright (C) 2026 Kumo inc. and its affiliates. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -43,6 +43,8 @@ namespace ksearch {
         static const std::string DATABASE_SCHEMA_IDENTIFY;
         static const std::string TABLE_SCHEMA_IDENTIFY;
         static const std::string REGION_SCHEMA_IDENTIFY;
+        static const std::string KNS_SCHEMA_IDENTIFY;
+        static const std::string KNS_PEER_SCHEMA_IDENTIFY;
         static const std::string DDLWORK_IDENTIFY;
         static const std::string STATISTICS_IDENTIFY;
         static const std::string INDEX_DDLWORK_REGION_IDENTIFY;
@@ -59,50 +61,50 @@ namespace ksearch {
 
         //schema control method
         void meta_manager(google::protobuf::RpcController *controller,
-                                  const pb::MetaManagerRequest *request,
-                                  pb::MetaManagerResponse *response,
-                                  google::protobuf::Closure *done) override;
+                          const pb::MetaManagerRequest *request,
+                          pb::MetaManagerResponse *response,
+                          google::protobuf::Closure *done) override;
 
         void query(google::protobuf::RpcController *controller,
-                           const pb::QueryRequest *request,
-                           pb::QueryResponse *response,
-                           google::protobuf::Closure *done) override;
+                   const pb::QueryRequest *request,
+                   pb::QueryResponse *response,
+                   google::protobuf::Closure *done) override;
 
         //raft control method
         void raft_control(google::protobuf::RpcController *controller,
-                                  const pb::RaftControlRequest *request,
-                                  pb::RaftControlResponse *response,
-                                  google::protobuf::Closure *done) override;
+                          const pb::RaftControlRequest *request,
+                          pb::RaftControlResponse *response,
+                          google::protobuf::Closure *done) override;
 
         void store_heartbeat(google::protobuf::RpcController *controller,
-                                     const pb::StoreHeartBeatRequest *request,
-                                     pb::StoreHeartBeatResponse *response,
-                                     google::protobuf::Closure *done) override;
+                             const pb::StoreHeartBeatRequest *request,
+                             pb::StoreHeartBeatResponse *response,
+                             google::protobuf::Closure *done) override;
 
         void ks_heartbeat(google::protobuf::RpcController *controller,
-                                  const pb::KsHeartBeatRequest *request,
-                                  pb::KsHeartBeatResponse *response,
-                                  google::protobuf::Closure *done) override;
+                          const pb::KsHeartBeatRequest *request,
+                          pb::KsHeartBeatResponse *response,
+                          google::protobuf::Closure *done) override;
 
         void ks_other_heartbeat(google::protobuf::RpcController *controller,
-                                        const pb::KsOtherHeartBeatRequest *request,
-                                        pb::KsOtherHeartBeatResponse *response,
-                                        google::protobuf::Closure *done) override;
+                                const pb::KsOtherHeartBeatRequest *request,
+                                pb::KsOtherHeartBeatResponse *response,
+                                google::protobuf::Closure *done) override;
 
         void console_heartbeat(google::protobuf::RpcController *controller,
-                                       const pb::ConsoleHeartBeatRequest *request,
-                                       pb::ConsoleHeartBeatResponse *response,
-                                       google::protobuf::Closure *done) override;
+                               const pb::ConsoleHeartBeatRequest *request,
+                               pb::ConsoleHeartBeatResponse *response,
+                               google::protobuf::Closure *done) override;
 
         void tso_service(google::protobuf::RpcController *controller,
-                                 const pb::TsoRequest *request,
-                                 pb::TsoResponse *response,
-                                 google::protobuf::Closure *done) override;
+                         const pb::TsoRequest *request,
+                         pb::TsoResponse *response,
+                         google::protobuf::Closure *done) override;
 
         void migrate(google::protobuf::RpcController *controller,
-                             const pb::MigrateRequest * /*request*/,
-                             pb::MigrateResponse *response,
-                             google::protobuf::Closure *done) override;
+                     const pb::MigrateRequest * /*request*/,
+                     pb::MigrateResponse *response,
+                     google::protobuf::Closure *done) override;
 
         void flush_memtable_thread();
 
