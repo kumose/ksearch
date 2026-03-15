@@ -12,6 +12,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
+
+#pragma once
 
 #include <ksearch/proto/reverse.pb.h>
 #include <ksearch/common/table_record.h>
@@ -79,7 +82,7 @@ namespace ksearch {
             delay_init_context->reverse_rocksdb_keys.emplace_back(std::move(key));
         } else {
             auto *exist_parser = this->_schema->get_term(term);
-            if (exist_parser != NULL) {
+            if (exist_parser != nullptr) {
                 *this = *exist_parser;
                 return 0;
             }

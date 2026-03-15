@@ -514,7 +514,7 @@ namespace ksearch {
         int init_term_executor(const pb::FulltextIndex &fulltext_index_info, BooleanExecutor *&exe);
 
         bool valid() {
-            if (_exe != NULL) {
+            if (_exe != nullptr) {
                 while (true) {
                     _cur_node = (const ReverseNode *) (_exe->next());
                     if (_cur_node) {
@@ -568,7 +568,7 @@ namespace ksearch {
                     }
                 }
             } catch (std::exception &exp) {
-                DB_FATAL("pack weight or query words expection %s", exp.what());
+                DB_FATAL("pack weight or query words exception %s", exp.what());
             }
 
             return 0;
@@ -576,7 +576,7 @@ namespace ksearch {
 
     private:
         OperatorBooleanExecutor *_exe = nullptr;
-        const ReverseNode *_cur_node = NULL;
+        const ReverseNode *_cur_node = nullptr;
         SmartIndex _index_info;
         SmartTable _table_info;
         std::vector<BooleanExecutorBase *> _son_exe_vec;

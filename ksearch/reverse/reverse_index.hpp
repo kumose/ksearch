@@ -12,6 +12,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
+
+#pragma once
 
 namespace ksearch {
     template<typename Schema>
@@ -85,8 +88,8 @@ namespace ksearch {
         }
         //清理旧缓存
         if (_is_over_cache) {
-            for (auto &key: _cache_keys) {
-                _cache.del(key);
+            for (auto &k: _cache_keys) {
+                _cache.del(k);
             }
         }
 
@@ -682,4 +685,4 @@ namespace ksearch {
         ++g_statistic_insert_key_num;
         return 0;
     }
-} // end of namespace
+} // namespace ksearch
